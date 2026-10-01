@@ -140,6 +140,8 @@ struct OverviewView: View {
             NSWorkspace.shared.open(URL(string: "https://notion.so")!)
         case "integration_calcom":
             NSWorkspace.shared.open(URL(string: "https://app.cal.com/bookings")!)
+        case "integration_qimah":
+            BoardsStore.shared.openBoards()
         default:
             // Non-integration real tasks
             if task.source == .n8n {
@@ -980,6 +982,7 @@ struct IntegrationCardView: View {
         case "integration_stripe":  return KeychainStore.shared.get("stripe-api-key") != nil
         case "integration_notion":  return KeychainStore.shared.get("notion-api-key") != nil
         case "integration_calcom":  return KeychainStore.shared.get("calcom-api-key") != nil
+        case "integration_qimah":   return true
         default: return false
         }
     }
@@ -996,6 +999,7 @@ struct IntegrationCardView: View {
         case "integration_stripe":  return URL(string: "https://dashboard.stripe.com/payments")
         case "integration_notion":  return URL(string: "https://notion.so")
         case "integration_calcom":  return URL(string: "https://app.cal.com/bookings")
+        case "integration_qimah":   return URL(string: BoardsStore.base)
         default: return nil
         }
     }
@@ -1052,6 +1056,9 @@ struct IntegrationCardView: View {
                 withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) { showingDetail = false }
             }
             .transition(.opacity)
+        } else if task.id == "integration_qimah" {
+            QimahBoardsCardView()
+                .transition(.opacity)
         } else if vercelHasActivity {
             VercelDeploymentListView(deployments: appState.vercelDeployments, onOpenDetail: {
                 withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) { showingDetail = true }
@@ -2274,6 +2281,7 @@ struct AgentPillsView: View {
 struct AgentPill: View {
     let task: AgentTask
     @ObservedObject var state: AppState
+    @ObservedObject private var boards = BoardsStore.shared
     @Binding var swapping: Bool
     let onTap: () -> Void
     @State private var isHovered = false
@@ -2317,6 +2325,9 @@ struct AgentPill: View {
                 if let badge = task.pillBadge {
                     PillBadgeView(badge: badge, taskColor: task.color)
                         .offset(x: 3, y: -3)
+                } else if task.id == "integration_qimah", !boards.owed.isEmpty {
+                    OwedBadge(count: boards.owed.count)
+                        .offset(x: 4, y: -4)
                 }
             }
         }

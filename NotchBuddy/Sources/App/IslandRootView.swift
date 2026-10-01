@@ -22,6 +22,7 @@ struct IslandRootView: View {
 
 struct IslandContainer: View {
     @ObservedObject var state: AppState
+    @ObservedObject private var boards = BoardsStore.shared
     @State private var islandWidth:  CGFloat = IslandConst.notchWidth
     @State private var islandHeight: CGFloat = IslandConst.notchHeight
     @State private var cornerRadius: CGFloat = IslandConst.roundedCorner
@@ -112,6 +113,12 @@ struct IslandContainer: View {
                         .scaleEffect(IslandRestingLayout(width: islandWidth, height: islandHeight).miniGridScale)
                         .position(x: islandWidth - 40, y: islandHeight / 2)
                         .transition(.opacity)
+                    if !boards.owed.isEmpty {
+                        // Owed count from boards.qimah.net, next to Mochi
+                        OwedBadge(count: boards.owed.count)
+                            .position(x: 62, y: islandHeight / 2 - 6)
+                            .transition(.opacity)
+                    }
                 }
             }
             .animation(.easeInOut(duration: 0.25), value: state.mode == .compact)

@@ -6,6 +6,7 @@ import SwiftUI
 
 struct LiveView: View {
     @ObservedObject var feed = LiveFeed.shared
+    @ObservedObject private var boards = BoardsStore.shared
 
     var body: some View {
         CardBackground(wash: nil) {
@@ -41,6 +42,11 @@ struct LiveView: View {
                 }
                 .frame(minHeight: 40, alignment: .leading)
                 .padding(.leading, 58)
+
+                // Where this work sits on boards.qimah.net
+                if let focus = boards.focus {
+                    BoardWhereStrip(focus: focus)
+                }
 
                 if let item = feed.current {
                     LiveHeader(item: item)

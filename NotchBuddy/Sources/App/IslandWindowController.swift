@@ -71,6 +71,10 @@ final class IslandWindowController: NSWindowController {
     }
 
     private func setupPanel(screen: NSScreen) {
+        // Debug: fake a boards.qimah.net news event (distributed notification "coucou.debugNews").
+        DistributedNotificationCenter.default().addObserver(forName: .init("coucou.debugNews"), object: nil, queue: .main) { _ in
+            NotificationCenter.default.post(name: .boardsNews, object: "debug")
+        }
         // Debug: `notifyutil`-style snapshot of the island without Screen Recording permission.
         // Post the distributed notification "coucou.snapshot" with a file path as object.
         DistributedNotificationCenter.default().addObserver(forName: .init("coucou.snapshot"), object: nil, queue: .main) { [weak self] note in
@@ -391,6 +395,18 @@ final class IslandWindowController: NSWindowController {
                 return
             }
             self.expand(to: view)
+        }
+
+        // boards.qimah.net news (card shipped, something new owed): pop Home on the Qimah card
+        NotificationCenter.default.addObserver(forName: .boardsNews, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.state.mode != .expanded else { return }
+                self.state.setFocus("integration_qimah")
+                SoundEngine.shared.play("blip")
+                self.expand(to: .overview)
+                self.fsm.adoptHome()
+                if !self.wasInIsland { self.fsm.mouseLeft() }
+            }
         }
 
         // Hook server compact reveal (non-alert work events: session start, tool use, etc.)

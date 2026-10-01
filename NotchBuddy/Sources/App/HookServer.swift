@@ -192,6 +192,8 @@ final class HookServer: @unchecked Sendable {
                 appendStep(id: "integration_claude", step: String(prompt.prefix(60)))
             }
             LiveFeed.shared.userPrompt(transcriptPath: payload["transcript_path"] as? String)
+            BoardsStore.shared.noteBranch(cwd: cwd)
+            BoardsStore.shared.noteContext(payload["prompt"] as? String ?? "")
             if state.autoOpenLive, state.isPresent, state.mode != .expanded {
                 NotificationCenter.default.post(name: .hookExpand, object: IslandView.live)
             }
@@ -208,6 +210,8 @@ final class HookServer: @unchecked Sendable {
             nbLog("PreToolUse \(tool)")
             LiveFeed.shared.preToolUse(tool: tool, input: input,
                                        transcriptPath: payload["transcript_path"] as? String)
+            BoardsStore.shared.noteBranch(cwd: cwd)
+            BoardsStore.shared.noteContext(input["command"] as? String ?? "")
             if state.autoOpenLive, ["Edit", "MultiEdit", "Write"].contains(tool),
                state.isPresent, state.mode != .expanded || state.view == .greeting {
                 nbLog("Live: auto-open (mode \(state.mode))")
