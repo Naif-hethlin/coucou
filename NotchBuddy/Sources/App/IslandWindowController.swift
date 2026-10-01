@@ -51,7 +51,7 @@ final class IslandWindowController: NSWindowController {
         let nH = geometry.height
 
         let panelW: CGFloat = 720
-        let panelH: CGFloat = 320
+        let panelH: CGFloat = 440   // tall enough for the Live tab
         let sf = screen.frame
         let panel = IslandPanel(
             contentRect: NSRect(x: sf.midX - panelW/2, y: sf.maxY - panelH,

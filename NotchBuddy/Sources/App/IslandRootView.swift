@@ -99,7 +99,7 @@ struct IslandContainer: View {
                 // retain the panel's full height for particles and hands.
                 .mask(alignment: .topLeading) {
                     Rectangle().frame(width: islandWidth,
-                                      height: state.mode == .expanded ? 320 : islandHeight)
+                                      height: state.mode == .expanded ? 440 : islandHeight)
                 }
                 .opacity(uploadActive || greetingActive ? 0 : 1)
                 .animation(.easeInOut(duration: 0.25), value: uploadActive || greetingActive)

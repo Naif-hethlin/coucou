@@ -207,9 +207,9 @@ final class HookServer: @unchecked Sendable {
             appendStep(id: "integration_claude", step: step)
             nbLog("PreToolUse \(tool)")
             LiveFeed.shared.preToolUse(tool: tool, input: input,
-                                       transcriptPath: payload["transcript_path"] as? String, cwd: cwd)
+                                       transcriptPath: payload["transcript_path"] as? String)
             if state.autoOpenLive, ["Edit", "MultiEdit", "Write"].contains(tool),
-               state.isPresent, state.mode != .expanded {
+               state.isPresent, state.mode != .expanded || state.view == .greeting {
                 nbLog("Live: auto-open (mode \(state.mode))")
                 NotificationCenter.default.post(name: .hookExpand, object: IslandView.live)
             }

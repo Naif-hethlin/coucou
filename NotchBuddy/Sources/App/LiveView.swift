@@ -71,14 +71,11 @@ private struct LiveHeader: View {
                     .font(.qimah(size: 11.5, weight: .medium))
                     .foregroundColor(Q.text)
             } else {
-                (Text(folder)
-                    .font(.qimah(size: 11.5))
-                    .foregroundColor(Q.muted)
-                + Text(item.title)
+                Text(item.title)
                     .font(.qimah(size: 11.5, weight: .semibold))
-                    .foregroundColor(Q.text))
+                    .foregroundColor(Q.text)
                     .lineLimit(1)
-                    .truncationMode(.head)
+                    .help(item.path)
                 if let line = item.line {
                     Text("line \(line)")
                         .font(.system(size: 10, design: .monospaced))
@@ -115,19 +112,6 @@ private struct LiveHeader: View {
         case .write: return "doc.badge.plus"
         case .command: return "terminal"
         }
-    }
-
-    /// Path relative to the project, without the file name.
-    private var folder: String {
-        let dir = (item.path as NSString).deletingLastPathComponent
-        let root = LiveFeed.shared.projectRoot
-        if !root.isEmpty, dir == root { return "" }
-        if !root.isEmpty, dir.hasPrefix(root + "/") { return String(dir.dropFirst(root.count + 1)) + "/" }
-        let home = NSHomeDirectory()
-        var short = dir.hasPrefix(home) ? "~" + dir.dropFirst(home.count) : dir
-        let parts = short.split(separator: "/")
-        if parts.count > 2 { short = "…/" + parts.suffix(2).joined(separator: "/") }
-        return short + "/"
     }
 }
 

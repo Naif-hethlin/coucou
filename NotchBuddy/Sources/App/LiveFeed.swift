@@ -200,12 +200,8 @@ final class LiveFeed: ObservableObject {
 
     // MARK: - Hook input
 
-    /// Project folder of the session, used to shorten paths in the header.
-    @Published private(set) var projectRoot: String = ""
-
-    func preToolUse(tool: String, input: [String: Any], transcriptPath: String?, cwd: String = "") {
+    func preToolUse(tool: String, input: [String: Any], transcriptPath: String?) {
         lastEvent = .now
-        if !cwd.isEmpty { projectRoot = cwd }
         if let transcriptPath {
             self.transcriptPath = transcriptPath
             refreshWhy(from: transcriptPath)
@@ -304,7 +300,7 @@ final class LiveFeed: ObservableObject {
             // Commands carry their own description; edits keep the live transcript text.
             if item.kind == .command, !item.why.isEmpty { why = item.why }
 
-            let hurry: Double = queue.isEmpty ? 1 : 3
+            let hurry: Double = (queue.isEmpty ? 1 : 3) * AppState.shared.liveSpeed
             let hasRemoved = item.lines.contains { $0.kind == .removed }
 
             phase = .show
@@ -317,7 +313,7 @@ final class LiveFeed: ObservableObject {
             phase = .typing
             let total = item.typedChars
             // At least 45 chars/s so it reads as typing; at most ~2.5s per edit.
-            let perSecond = max(45, Double(total) / 2.5) * (queue.isEmpty ? 1 : 3)
+            let perSecond = max(45, Double(total) / 2.5) * hurry
             let tick = 1.0 / 60
             var acc = 0.0
             while typed < total {
