@@ -168,10 +168,13 @@ final class HookServer: @unchecked Sendable {
         let bundleId    = payload["bundle_id"]    as? String ?? ""
         let isVSCode = termProgram.lowercased().contains("vscode") ||
                        bundleId.lowercased().contains("vscode")
-        guard isVSCode else {
-            nbLog("Ignored \(name) from \(termProgram.isEmpty ? bundleId : termProgram) (\(projectName))")
-            return
-        }
+        // Every session, from any app, is tracked on its own; only the followed
+        // session drives Live, Progress and the boards bar, so sessions don't mix.
+        SessionStore.shared.handle(event: name, payload: payload)
+        routeToFollowed(name: name, payload: payload, sessionId: sessionId, cwd: cwd)
+
+        // The original VS Code pill below still only listens to VS Code.
+        guard isVSCode else { return }
 
         let focused = state.focusId == "integration_claude"
 
@@ -191,13 +194,6 @@ final class HookServer: @unchecked Sendable {
             if let prompt = payload["prompt"] as? String, !prompt.isEmpty {
                 appendStep(id: "integration_claude", step: String(prompt.prefix(60)))
             }
-            LiveFeed.shared.userPrompt(transcriptPath: payload["transcript_path"] as? String)
-            ProgressStore.shared.note(transcriptPath: payload["transcript_path"] as? String)
-            BoardsStore.shared.noteBranch(cwd: cwd)
-            BoardsStore.shared.noteContext(payload["prompt"] as? String ?? "")
-            if state.autoOpenLive, state.isPresent, state.mode != .expanded {
-                NotificationCenter.default.post(name: .hookExpand, object: IslandView.live)
-            }
             if state.isPresent { expandIfNeeded(to: .overview) }
 
         case "PreToolUse":
@@ -209,27 +205,12 @@ final class HookServer: @unchecked Sendable {
             let step = frenchStep(tool: tool, input: input)
             appendStep(id: "integration_claude", step: step)
             nbLog("PreToolUse \(tool)")
-            LiveFeed.shared.preToolUse(tool: tool, input: input,
-                                       transcriptPath: payload["transcript_path"] as? String)
-            BoardsStore.shared.noteBranch(cwd: cwd)
-            BoardsStore.shared.noteContext(input["command"] as? String ?? "")
-            ProgressStore.shared.preToolUse(tool: tool, input: input)
-            ProgressStore.shared.note(transcriptPath: payload["transcript_path"] as? String)
-            if state.autoOpenLive, ["Edit", "MultiEdit", "Write"].contains(tool),
-               state.isPresent, state.mode != .expanded || state.view == .greeting {
-                nbLog("Live: auto-open (mode \(state.mode))")
-                NotificationCenter.default.post(name: .hookExpand, object: IslandView.live)
-            }
 
         case "PostToolUse":
             state.updateTask(id: "integration_claude", state: .working)
-            LiveFeed.shared.postToolUse(tool: payload["tool_name"] as? String ?? "",
-                                        response: payload["tool_response"])
-            ProgressStore.shared.postToolUse(response: payload["tool_response"])
 
         case "PostToolUseFailure":
             state.updateTask(id: "integration_claude", state: .working)
-            LiveFeed.shared.toolFailed()
             appendStep(id: "integration_claude", step: "⚠ failed")
 
         case "Notification":
@@ -245,8 +226,6 @@ final class HookServer: @unchecked Sendable {
 
         case "Stop":
             state.updateTask(id: "integration_claude", state: .finished)
-            LiveFeed.shared.stopped()
-            ProgressStore.shared.note(transcriptPath: payload["transcript_path"] as? String)
             if let message = payload["message"] as? String, !message.isEmpty {
                 appendStep(id: "integration_claude", step: String(message.prefix(60)))
             }
@@ -271,7 +250,6 @@ final class HookServer: @unchecked Sendable {
             }
 
         case "SessionEnd":
-            LiveFeed.shared.stopped()
             activeSessionId = nil
             state.updateTask(id: "integration_claude", state: .idle)
             clearSession()
@@ -282,6 +260,50 @@ final class HookServer: @unchecked Sendable {
         case "SubagentStop":
             appendStep(id: "integration_claude", step: "• subagent done")
 
+        default:
+            break
+        }
+    }
+
+    // MARK: - Live / Progress / boards routing (any session, followed one only)
+
+    @MainActor
+    private func routeToFollowed(name: String, payload: [String: Any], sessionId: String, cwd: String) {
+        let state = AppState.shared
+        guard SessionStore.shared.shouldFollow(sessionId) else { return }
+        let transcript = payload["transcript_path"] as? String
+        let tool = payload["tool_name"] as? String ?? ""
+        let input = payload["tool_input"] as? [String: Any] ?? [:]
+
+        switch name {
+        case "UserPromptSubmit":
+            LiveFeed.shared.userPrompt(transcriptPath: transcript)
+            ProgressStore.shared.note(transcriptPath: transcript)
+            BoardsStore.shared.noteBranch(cwd: cwd)
+            BoardsStore.shared.noteContext(payload["prompt"] as? String ?? "")
+            if state.autoOpenLive, state.isPresent, state.mode != .expanded {
+                NotificationCenter.default.post(name: .hookExpand, object: IslandView.live)
+            }
+        case "PreToolUse":
+            LiveFeed.shared.preToolUse(tool: tool, input: input, transcriptPath: transcript)
+            BoardsStore.shared.noteBranch(cwd: cwd)
+            BoardsStore.shared.noteContext(input["command"] as? String ?? "")
+            ProgressStore.shared.preToolUse(tool: tool, input: input)
+            ProgressStore.shared.note(transcriptPath: transcript)
+            if state.autoOpenLive, ["Edit", "MultiEdit", "Write"].contains(tool),
+               state.isPresent, state.mode != .expanded || state.view == .greeting {
+                NotificationCenter.default.post(name: .hookExpand, object: IslandView.live)
+            }
+        case "PostToolUse":
+            LiveFeed.shared.postToolUse(tool: tool, response: payload["tool_response"])
+            ProgressStore.shared.postToolUse(response: payload["tool_response"])
+        case "PostToolUseFailure":
+            LiveFeed.shared.toolFailed()
+        case "Stop":
+            LiveFeed.shared.stopped()
+            ProgressStore.shared.note(transcriptPath: transcript)
+        case "SessionEnd":
+            LiveFeed.shared.stopped()
         default:
             break
         }

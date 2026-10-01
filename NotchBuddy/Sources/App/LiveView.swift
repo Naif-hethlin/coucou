@@ -6,6 +6,7 @@ import SwiftUI
 
 struct LiveView: View {
     @ObservedObject var feed = LiveFeed.shared
+    @ObservedObject private var sessions = SessionStore.shared
     @ObservedObject private var boards = BoardsStore.shared
 
     var body: some View {
@@ -60,6 +61,26 @@ struct LiveView: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .overlay(alignment: .topTrailing) {
+                // Which session Live is following (only worth saying when there are several)
+                if sessions.sessions.count > 1, let s = sessions.session(sessions.followed) {
+                    HStack(spacing: 5) {
+                        Circle().fill(Color(hex: s.color)).frame(width: 6, height: 6)
+                        Text(s.title.isEmpty ? s.project : s.title)
+                            .font(.qimah(size: 10, weight: .medium))
+                            .foregroundColor(Q.soft)
+                            .lineLimit(1)
+                        if sessions.pinned != nil {
+                            Image(systemName: "pin.fill").font(.system(size: 7)).foregroundColor(Q.mint)
+                        }
+                    }
+                    .frame(maxWidth: 200, alignment: .trailing)
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(Q.raised)
+                    .clipShape(Capsule())
+                    .padding(.top, 10).padding(.trailing, 12)
+                }
+            }
         }
     }
 }

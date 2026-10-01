@@ -74,6 +74,7 @@ final class ProgressStore: ObservableObject {
         p.prURLs = Self.prURLs(in: text)
         apply(p)
         updatedAt = mod
+        SessionStore.shared.setProgress(overall)
         if isUpdate { NotificationCenter.default.post(name: .progressUpdated, object: nil) }
     }
 

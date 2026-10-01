@@ -27,6 +27,7 @@ struct IslandViewContent: View {
         case .greeting:  EmptyView()  // GreetingCanvasView overlaid in IslandRootView
         case .live:      LiveView()
         case .progress:  ProgressTabView()
+        case .sessions:  SessionsTabView()
         }
     }
 }
