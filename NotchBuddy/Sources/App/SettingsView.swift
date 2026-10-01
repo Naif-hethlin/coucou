@@ -21,6 +21,7 @@ struct SettingsView: View {
     @State private var stripeKey: String    = KeychainStore.shared.get("stripe-api-key")  ?? ""
     @State private var calcomKey: String    = KeychainStore.shared.get("calcom-api-key")  ?? ""
     @State private var notionKey: String    = KeychainStore.shared.get("notion-api-key")  ?? ""
+    @State private var clickupToken: String = KeychainStore.shared.get("clickup-token")   ?? ""
 
     // Hotkey
     @State private var hotkeyFlags: UInt    = AppState.shared.hotkeyFlags
@@ -126,92 +127,28 @@ struct SettingsView: View {
                 GroupBox("Integrations") {
                     VStack(alignment: .leading, spacing: 14) {
 
-                        // Resend
-                        VStack(alignment: .leading, spacing: 5) {
-                            HStack(spacing: 6) {
-                                Circle().fill(Color(hex: "#22C55E")).frame(width: 8, height: 8)
-                                Text("Resend").font(.qimah(size: 12, weight: .semibold))
-                            }
-                            SecureField("API key  (re_…)", text: $resendKey)
-                                .textFieldStyle(.roundedBorder)
-                            TextField("From address  (you@yourdomain.com)", text: $resendFrom)
-                                .textFieldStyle(.roundedBorder)
-                        }
-
-                        // n8n
-                        VStack(alignment: .leading, spacing: 5) {
-                            HStack(spacing: 6) {
-                                Circle().fill(Color(hex: "#F29B38")).frame(width: 8, height: 8)
-                                Text("n8n").font(.qimah(size: 12, weight: .semibold))
-                            }
-                            TextField("Instance URL  (https://…)", text: $n8nUrl)
-                                .textFieldStyle(.roundedBorder)
-                            SecureField("API key", text: $n8nKey)
-                                .textFieldStyle(.roundedBorder)
-                            IntegrationFilterRow(
-                                label: "Workflows",
-                                items: n8nWorkflows,
-                                filter: $state.n8nWorkflowFilter,
-                                loading: loadingN8n,
-                                onLoad: loadN8nWorkflows
-                            )
-                        }
-
-                        // Vercel
-                        VStack(alignment: .leading, spacing: 5) {
-                            HStack(spacing: 6) {
-                                Circle().fill(Color(hex: "#7C5CFF")).frame(width: 8, height: 8)
-                                Text("Vercel").font(.qimah(size: 12, weight: .semibold))
-                            }
-                            SecureField("Token", text: $vercelToken)
-                                .textFieldStyle(.roundedBorder)
-                            IntegrationFilterRow(
-                                label: "Projects",
-                                items: vercelProjects,
-                                filter: $state.vercelProjectFilter,
-                                loading: loadingVercel,
-                                onLoad: loadVercelProjects
-                            )
-                        }
-
-                        // GitHub
+                        // GitHub (optional: without a token Coucou uses your gh CLI login)
                         VStack(alignment: .leading, spacing: 5) {
                             HStack(spacing: 6) {
                                 Circle().fill(Color(hex: "#F4505E")).frame(width: 8, height: 8)
                                 Text("GitHub").font(.qimah(size: 12, weight: .semibold))
+                                Text(KeychainStore.shared.ghCLIToken != nil ? "using your gh login" : "")
+                                    .font(.qimah(size: 11)).foregroundColor(.secondary)
                             }
-                            SecureField("Personal Access Token", text: $githubToken)
+                            SecureField("Personal Access Token (optional)", text: $githubToken)
                                 .textFieldStyle(.roundedBorder)
                         }
 
-                        // Stripe
+                        // ClickUp
                         VStack(alignment: .leading, spacing: 5) {
                             HStack(spacing: 6) {
-                                Circle().fill(Color(hex: "#0570DE")).frame(width: 8, height: 8)
-                                Text("Stripe").font(.qimah(size: 12, weight: .semibold))
+                                Circle().fill(Color(hex: "#7B68EE")).frame(width: 8, height: 8)
+                                Text("ClickUp").font(.qimah(size: 12, weight: .semibold))
                             }
-                            SecureField("Secret key  (sk_live_… or sk_test_…)", text: $stripeKey)
+                            SecureField("Personal API token  (pk_…)", text: $clickupToken)
                                 .textFieldStyle(.roundedBorder)
-                        }
-
-                        // Cal.com
-                        VStack(alignment: .leading, spacing: 5) {
-                            HStack(spacing: 6) {
-                                Circle().fill(Color(hex: "#C9956A")).frame(width: 8, height: 8)
-                                Text("Cal.com").font(.qimah(size: 12, weight: .semibold))
-                            }
-                            SecureField("API key  (cal_live_…)", text: $calcomKey)
-                                .textFieldStyle(.roundedBorder)
-                        }
-
-                        // Notion
-                        VStack(alignment: .leading, spacing: 5) {
-                            HStack(spacing: 6) {
-                                Circle().fill(Q.text).frame(width: 8, height: 8)
-                                Text("Notion").font(.qimah(size: 12, weight: .semibold))
-                            }
-                            SecureField("Integration token  (secret_…)", text: $notionKey)
-                                .textFieldStyle(.roundedBorder)
+                            Text("ClickUp › avatar › Settings › Apps › API Token › Generate")
+                                .font(.qimah(size: 10.5)).foregroundColor(.secondary)
                         }
 
                         Button("Save integrations") { saveIntegrations() }
@@ -442,15 +379,8 @@ struct SettingsView: View {
     }
 
     private func saveIntegrations() {
-        saveKey("resend-api-key",  value: resendKey)
-        saveKey("resend-from",     value: resendFrom)
-        saveKey("n8n-url",         value: n8nUrl)
-        saveKey("n8n-api-key",     value: n8nKey)
-        saveKey("vercel-token",    value: vercelToken)
         saveKey("github-token",    value: githubToken)
-        saveKey("stripe-api-key",  value: stripeKey)
-        saveKey("calcom-api-key",  value: calcomKey)
-        saveKey("notion-api-key",  value: notionKey)
+        saveKey("clickup-token",   value: clickupToken)
         statusMessage = "✓ Integration keys saved."
     }
 
