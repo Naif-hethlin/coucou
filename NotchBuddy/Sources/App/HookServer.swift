@@ -191,6 +191,10 @@ final class HookServer: @unchecked Sendable {
             if let prompt = payload["prompt"] as? String, !prompt.isEmpty {
                 appendStep(id: "integration_claude", step: String(prompt.prefix(60)))
             }
+            LiveFeed.shared.userPrompt(transcriptPath: payload["transcript_path"] as? String)
+            if state.autoOpenLive, state.isPresent, state.mode != .expanded {
+                NotificationCenter.default.post(name: .hookExpand, object: IslandView.live)
+            }
             if state.isPresent { expandIfNeeded(to: .overview) }
 
         case "PreToolUse":
@@ -202,12 +206,22 @@ final class HookServer: @unchecked Sendable {
             let step = frenchStep(tool: tool, input: input)
             appendStep(id: "integration_claude", step: step)
             nbLog("PreToolUse \(tool)")
+            LiveFeed.shared.preToolUse(tool: tool, input: input,
+                                       transcriptPath: payload["transcript_path"] as? String, cwd: cwd)
+            if state.autoOpenLive, ["Edit", "MultiEdit", "Write"].contains(tool),
+               state.isPresent, state.mode != .expanded {
+                nbLog("Live: auto-open (mode \(state.mode))")
+                NotificationCenter.default.post(name: .hookExpand, object: IslandView.live)
+            }
 
         case "PostToolUse":
             state.updateTask(id: "integration_claude", state: .working)
+            LiveFeed.shared.postToolUse(tool: payload["tool_name"] as? String ?? "",
+                                        response: payload["tool_response"])
 
         case "PostToolUseFailure":
             state.updateTask(id: "integration_claude", state: .working)
+            LiveFeed.shared.toolFailed()
             appendStep(id: "integration_claude", step: "⚠ failed")
 
         case "Notification":
@@ -223,11 +237,12 @@ final class HookServer: @unchecked Sendable {
 
         case "Stop":
             state.updateTask(id: "integration_claude", state: .finished)
+            LiveFeed.shared.stopped()
             if let message = payload["message"] as? String, !message.isEmpty {
                 appendStep(id: "integration_claude", step: String(message.prefix(60)))
             }
             SoundEngine.shared.play("finish")
-            if focused {
+            if focused && !(state.mode == .expanded && state.view == .live) {
                 expandIfNeeded(to: .finished)
             } else {
                 setPillBadge(id: "integration_claude", badge: .finished)
@@ -247,6 +262,7 @@ final class HookServer: @unchecked Sendable {
             }
 
         case "SessionEnd":
+            LiveFeed.shared.stopped()
             activeSessionId = nil
             state.updateTask(id: "integration_claude", state: .idle)
             clearSession()

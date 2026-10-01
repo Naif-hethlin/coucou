@@ -25,6 +25,7 @@ struct IslandViewContent: View {
         case .note:      NoteView(state: state)
         case .settings:  SettingsIslandView(state: state)
         case .greeting:  EmptyView()  // GreetingCanvasView overlaid in IslandRootView
+        case .live:      LiveView()
         }
     }
 }
@@ -54,21 +55,21 @@ struct OverviewView: View {
                                     .fill(Color(hex: agent.color))
                                     .frame(width: 7, height: 7)
                                 Text(agent.name)
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(Color(hex: "#F5F6F8"))
+                                    .font(.qimah(size: 12, weight: .semibold))
+                                    .foregroundColor(Q.text)
                                     .lineLimit(1)
                                     .truncationMode(.tail)
                                     .layoutPriority(1)
                                 Text(agent.source == .claudeCode ? "Claude Code" : "n8n")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(Color(hex: "#8E939C"))
+                                    .font(.qimah(size: 11))
+                                    .foregroundColor(Q.muted)
                                     .lineLimit(1)
                                     .truncationMode(.tail)
                                 Spacer(minLength: 2)
                                 if agent.steps.count > 1 {
                                     Text("\(min(agent.stepIndex + 1, agent.steps.count))/\(agent.steps.count)")
-                                        .font(.system(size: 11))
-                                        .foregroundColor(Color(hex: "#6B7079"))
+                                        .font(.qimah(size: 11))
+                                        .foregroundColor(Q.dim)
                                         .fixedSize()
                                 }
                             }
@@ -91,8 +92,8 @@ struct OverviewView: View {
                 if !showingN8nDetail {
                     Button(action: { openAgentTarget(agent) }) {
                         Image(systemName: "arrow.up.right")
-                            .font(.system(size: 8, weight: .medium))
-                            .foregroundColor(Color(hex: "#5F646D"))
+                            .font(.qimah(size: 8, weight: .medium))
+                            .foregroundColor(Q.dim)
                             .frame(width: 16, height: 16)
                             .background(Color.white.opacity(0.07))
                             .clipShape(Circle())
@@ -171,10 +172,10 @@ struct EmptyStateView: View {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 5) {
                     Text("Nothing running right now.")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.qimah(size: 15, weight: .semibold))
                     Text("Drop a file or window, or ask me anything.")
-                        .font(.system(size: 13))
-                        .foregroundColor(Color(hex: "#9398A1"))
+                        .font(.qimah(size: 13))
+                        .foregroundColor(Q.muted)
                 }
                 Spacer()
                 PrimaryButton("Ask Claude") {
@@ -231,7 +232,7 @@ struct QuestionView: View {
             VStack(alignment: .leading, spacing: 5) {
                 AgentWho(task: state.focusTask, label: "Claude Code is asking a question")
                 Text("Which search engine to use?")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.qimah(size: 15, weight: .semibold))
                 HStack(spacing: 8) {
                     ForEach(["Postgres full-text", "Meilisearch", "Algolia"], id: \.self) { opt in
                         SecondaryButton(opt) { /* answer */ }
@@ -257,9 +258,9 @@ struct ErrorView: View {
             VStack(alignment: .leading, spacing: 5) {
                 AgentWho(task: state.focusTask, label: "n8n")
                 Text("Workflow stopped.")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.qimah(size: 15, weight: .semibold))
                 Text("Gmail node timed out after 30s. Retry or open n8n.")
-                    .font(.system(size: 12))
+                    .font(.qimah(size: 12))
                     .foregroundColor(Color(hex: "#FF8D97"))
                 HStack(spacing: 8) {
                     PrimaryButton("Retry") { /* retry */ }
@@ -285,7 +286,7 @@ struct FinishedView: View {
             VStack(alignment: .leading, spacing: 5) {
                 AgentWho(task: state.focusTask, label: "Claude Code finished")
                 Text(state.focusTask?.steps.last ?? "Session finished")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.qimah(size: 15, weight: .semibold))
                 HStack(spacing: 8) {
                     #if !APPSTORE
                     PrimaryButton("Open terminal") {
@@ -319,9 +320,9 @@ struct ConfusedView: View {
         ZStack {
             CardBackground(wash: .pink)
             VStack(alignment: .leading, spacing: 5) {
-                Text("Too many hits at once.").font(.system(size: 15, weight: .semibold))
+                Text("Too many hits at once.").font(.qimah(size: 15, weight: .semibold))
                 Text("Give me a sec — back to work in three seconds.")
-                    .font(.system(size: 13)).foregroundColor(Color(hex: "#9398A1"))
+                    .font(.qimah(size: 13)).foregroundColor(Q.muted)
             }
             .padding(.leading, 128)
             .padding(.trailing, 18)
@@ -347,7 +348,7 @@ struct UploadView: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color(hex: "#0E0F11"))
+                .fill(Q.deep)
             RoundedRectangle(cornerRadius: 20)
                 .stroke(
                     state.fileDragOver
@@ -362,15 +363,15 @@ struct UploadView: View {
                 ))
             VStack(alignment: .leading, spacing: 8) {
                 Text("Drop your files here")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(state.fileDragOver ? Color(hex: "#34D399") : Color(hex: "#D5D7DB"))
+                    .font(.qimah(size: 13, weight: .medium))
+                    .foregroundColor(state.fileDragOver ? Color(hex: "#34D399") : Q.soft)
                 HStack(spacing: 6) {
                     ForEach(["PDF", "Images", "Code", "Docs"], id: \.self) { label in
                         Text(label)
-                            .font(.system(size: 11))
+                            .font(.qimah(size: 11))
                             .padding(.horizontal, 8).padding(.vertical, 3)
                             .background(Color.white.opacity(0.07))
-                            .foregroundColor(Color(hex: "#B9BDC4"))
+                            .foregroundColor(Q.soft)
                             .clipShape(Capsule())
                     }
                 }
@@ -431,7 +432,7 @@ struct UploadingView: View {
             ZStack(alignment: .topLeading) {
                 // Background: dark base
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(hex: "#141518"))
+                    .fill(Q.card)
 
                 // Permanent green radial wash — brighter at completion
                 RoundedRectangle(cornerRadius: 20)
@@ -470,21 +471,21 @@ struct UploadingView: View {
                 HStack(spacing: 0) {
                     if isDone {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 12))
+                            .font(.qimah(size: 12))
                             .foregroundColor(Color(hex: "#34D399"))
                         Text("  \(state.droppedFile?.name ?? "File")")
-                            .font(.system(size: 12.5, weight: .semibold))
+                            .font(.qimah(size: 12.5, weight: .semibold))
                             .foregroundColor(Color(hex: "#34D399"))
                             .lineLimit(1).truncationMode(.middle)
                     } else {
                         Text("Uploading \(state.droppedFile?.name ?? "file")")
-                            .font(.system(size: 12.5))
-                            .foregroundColor(Color(hex: "#A9ADB5"))
+                            .font(.qimah(size: 12.5))
+                            .foregroundColor(Q.muted)
                             .lineLimit(1).truncationMode(.middle)
                         Spacer(minLength: 8)
                         Text("\(Int(progress * 100)) %")
-                            .font(.system(size: 12.5, weight: .medium))
-                            .foregroundColor(Color(hex: "#A9ADB5"))
+                            .font(.qimah(size: 12.5, weight: .medium))
+                            .foregroundColor(Q.muted)
                             .monospacedDigit()
                     }
                 }
@@ -493,7 +494,7 @@ struct UploadingView: View {
 
                 // Subtle top border (same as CardBackground)
                 RoundedRectangle(cornerRadius: 20)
-                    .stroke(Color.white.opacity(0.035), lineWidth: 1)
+                    .stroke(Q.border, lineWidth: 1)
             }
         }
     }
@@ -509,8 +510,8 @@ struct ChooseView: View {
             CardBackground(wash: nil)
             VStack(alignment: .leading, spacing: 8) {
                 let fileName = state.droppedFile?.name ?? "file"
-                (Text(fileName).font(.system(size: 14, weight: .semibold)) + Text(" is ready.").font(.system(size: 14, weight: .semibold)))
-                Text("What do you want to do with it?").font(.system(size: 12.5)).foregroundColor(Color(hex: "#9398A1"))
+                (Text(fileName).font(.qimah(size: 14, weight: .semibold)) + Text(" is ready.").font(.qimah(size: 14, weight: .semibold)))
+                Text("What do you want to do with it?").font(.qimah(size: 12.5)).foregroundColor(Q.muted)
                 HStack(spacing: 8) {
                     PrimaryButton("Ask a question") { state.view = .prompt }
                     SecondaryButton("Send by email") { state.view = .mail }
@@ -537,10 +538,10 @@ struct MailView: View {
             CardBackground(wash: nil)
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 6) {
-                    Text("New email").font(.system(size: 12, weight: .semibold))
+                    Text("New email").font(.qimah(size: 12, weight: .semibold))
                     if let name = state.droppedFile?.name {
-                        Text("with").font(.system(size: 12)).foregroundColor(Color(hex: "#8E939C"))
-                        Text(name).font(.system(size: 12)).foregroundColor(Color(hex: "#8E939C"))
+                        Text("with").font(.qimah(size: 12)).foregroundColor(Q.muted)
+                        Text(name).font(.qimah(size: 12)).foregroundColor(Q.muted)
                             .lineLimit(1).truncationMode(.middle)
                     }
                 }
@@ -551,8 +552,8 @@ struct MailView: View {
                 // Body — TextEditor scrolls internally when text overflows
                 TextEditor(text: $bodyText)
                     .scrollContentBackground(.hidden)
-                    .font(.system(size: 12.5))
-                    .foregroundColor(Color(hex: "#F5F6F8"))
+                    .font(.qimah(size: 12.5))
+                    .foregroundColor(Q.text)
                     .frame(height: 44)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
@@ -560,7 +561,7 @@ struct MailView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10))
 
                 if !statusMsg.isEmpty {
-                    Text(statusMsg).font(.system(size: 11)).foregroundColor(Color(hex: "#FF8D97"))
+                    Text(statusMsg).font(.qimah(size: 11)).foregroundColor(Color(hex: "#FF8D97"))
                 }
 
                 HStack(spacing: 8) {
@@ -757,14 +758,14 @@ struct PromptView: View {
                 HStack(spacing: 8) {
                     TextField(state.chatHistory.isEmpty ? "Ask me anything…" : "Continue…", text: $text)
                         .textFieldStyle(.plain)
-                        .font(.system(size: 13))
+                        .font(.qimah(size: 13))
                         .focused($focused)
                         .onSubmit { sendMessage() }
 
                     Button(action: sendMessage) {
                         Image(systemName: "arrow.up")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(Color(hex: "#0B0C0E"))
+                            .font(.qimah(size: 11, weight: .semibold))
+                            .foregroundColor(Q.deep)
                     }
                     .buttonStyle(SendButtonStyle())
                     .disabled(text.isEmpty)
@@ -806,8 +807,8 @@ struct ChatBubble: View {
             if message.role == .user {
                 Spacer(minLength: 32)
                 Text(message.content)
-                    .font(.system(size: 12.5))
-                    .foregroundColor(Color(hex: "#F1F2F4"))
+                    .font(.qimah(size: 12.5))
+                    .foregroundColor(Q.text)
                     .fixedSize(horizontal: false, vertical: true)
                     .textSelection(.enabled)
                     .padding(.horizontal, 10).padding(.vertical, 6)
@@ -815,8 +816,8 @@ struct ChatBubble: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             } else {
                 Text(message.content)
-                    .font(.system(size: 12.5))
-                    .foregroundColor(Color(hex: "#B0B5BE"))
+                    .font(.qimah(size: 12.5))
+                    .foregroundColor(Q.soft)
                     .fixedSize(horizontal: false, vertical: true)
                     .textSelection(.enabled)
                 Spacer(minLength: 8)
@@ -832,7 +833,7 @@ struct TypingDotsView: View {
         HStack(spacing: 4) {
             ForEach(0..<3, id: \.self) { i in
                 Circle()
-                    .fill(Color(hex: "#6B7079"))
+                    .fill(Q.dim)
                     .frame(width: 5, height: 5)
                     .scaleEffect(phase ? 1.2 : 0.6)
                     .animation(
@@ -868,7 +869,7 @@ struct SearchingView: View {
                     ContextChip(context: ctx)
                 }
                 ShimmeringText(label)
-                    .font(.system(size: 13.5))
+                    .font(.qimah(size: 13.5))
             }
             .padding(.leading, 84)
             .padding(.trailing, 16)
@@ -888,14 +889,14 @@ struct ResultView: View {
             if let result = state.searchResult {
                 VStack(alignment: .leading, spacing: 7) {
                     Text(result.title)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.qimah(size: 15, weight: .semibold))
 
                     VStack(spacing: 4) {
                         ForEach(result.items.prefix(3), id: \.label) { item in
                             HStack {
-                                Text(item.label).font(.system(size: 12.5, weight: .semibold))
+                                Text(item.label).font(.qimah(size: 12.5, weight: .semibold))
                                 Spacer()
-                                Text(item.detail).font(.system(size: 12.5)).foregroundColor(Color(hex: "#9398A1"))
+                                Text(item.detail).font(.qimah(size: 12.5)).foregroundColor(Q.muted)
                             }
                             .padding(.horizontal, 10).padding(.vertical, 6)
                             .background(Color.white.opacity(0.05))
@@ -904,7 +905,7 @@ struct ResultView: View {
                     }
 
                     if let note = result.note {
-                        Text(note).font(.system(size: 11)).foregroundColor(Color(hex: "#6E737C"))
+                        Text(note).font(.qimah(size: 11)).foregroundColor(Color(hex: "#6E737C"))
                     }
 
                     HStack(spacing: 8) {
@@ -941,7 +942,7 @@ struct NoteView: View {
             CardBackground(wash: nil)
             VStack(alignment: .leading, spacing: 4) {
                 Text(state.noteMessage ?? "")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.qimah(size: 15, weight: .semibold))
             }
             .padding(.leading, 98)
         }
@@ -1079,19 +1080,19 @@ struct IntegrationCardView: View {
                         .fill(Color(hex: task.color))
                         .frame(width: 7, height: 7)
                     Text(task.name)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(Color(hex: "#F5F6F8"))
+                        .font(.qimah(size: 12, weight: .semibold))
+                        .foregroundColor(Q.text)
                         .lineLimit(1).truncationMode(.tail)
                         .layoutPriority(1)
                     Text("Claude Code")
-                        .font(.system(size: 11))
-                        .foregroundColor(Color(hex: "#8E939C"))
+                        .font(.qimah(size: 11))
+                        .foregroundColor(Q.muted)
                         .lineLimit(1).truncationMode(.tail)
                     Spacer(minLength: 2)
                     if task.steps.count > 1 {
                         Text("\(min(task.stepIndex + 1, task.steps.count))/\(task.steps.count)")
-                            .font(.system(size: 11))
-                            .foregroundColor(Color(hex: "#6B7079"))
+                            .font(.qimah(size: 11))
+                            .foregroundColor(Q.dim)
                             .fixedSize()
                     }
                 }
@@ -1115,11 +1116,11 @@ struct IntegrationCardView: View {
                         .fill(Color(hex: task.color))
                         .frame(width: 7, height: 7)
                     Text(task.id == "integration_claude" ? "VS Code" : task.name)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(Color(hex: "#F5F6F8"))
+                        .font(.qimah(size: 12, weight: .semibold))
+                        .foregroundColor(Q.text)
                     Text("Integration")
-                        .font(.system(size: 11))
-                        .foregroundColor(Color(hex: "#8E939C"))
+                        .font(.qimah(size: 11))
+                        .foregroundColor(Q.muted)
                     Spacer(minLength: 2)
                 }
                 .padding(.top, 6)
@@ -1136,8 +1137,8 @@ struct IntegrationCardView: View {
                     let label = stripeErr ?? (isConfigured ? "Connected · loading…" : "Key not configured")
                     Circle().fill(dot).frame(width: 5, height: 5)
                     Text(label)
-                        .font(.system(size: 11))
-                        .foregroundColor(Color(hex: "#6B7079"))
+                        .font(.qimah(size: 11))
+                        .foregroundColor(Q.dim)
                 }
                 .padding(.leading, 108)
                 .padding(.top, 2)
@@ -1145,7 +1146,7 @@ struct IntegrationCardView: View {
                 HStack(spacing: 8) {
                     if task.id == "integration_claude" {
                         Button("Open Visual Studio Code") { openVSCode() }
-                            .font(.system(size: 11, weight: .medium))
+                            .font(.qimah(size: 11, weight: .medium))
                             .foregroundColor(Color(hex: task.color).opacity(0.7))
                             .buttonStyle(.plain)
                     } else if n8nHasActivity {
@@ -1158,12 +1159,12 @@ struct IntegrationCardView: View {
                             HStack(spacing: 5) {
                                 Circle().fill(accent).frame(width: 5, height: 5)
                                 Text(task.steps.first ?? "Workflow")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(Color(hex: "#C5C8CD"))
+                                    .font(.qimah(size: 11))
+                                    .foregroundColor(Q.soft)
                                     .lineLimit(1).truncationMode(.tail)
                                 Image(systemName: "ellipsis")
-                                    .font(.system(size: 8, weight: .medium))
-                                    .foregroundColor(Color(hex: "#6B7079"))
+                                    .font(.qimah(size: 8, weight: .medium))
+                                    .foregroundColor(Q.dim)
                             }
                             .padding(.horizontal, 8).padding(.vertical, 3)
                             .background(accent.opacity(0.1))
@@ -1173,21 +1174,21 @@ struct IntegrationCardView: View {
                         .buttonStyle(.plain)
                     } else if let url = openURL {
                         Button("Open \(task.name)") { NSWorkspace.shared.open(url) }
-                            .font(.system(size: 11, weight: .medium))
+                            .font(.qimah(size: 11, weight: .medium))
                             .foregroundColor(Color(hex: task.color).opacity(0.85))
                             .buttonStyle(.plain)
                     }
                     if task.id == "integration_stripe" {
                         if isConfigured {
                             Button("Refresh") { Task { @MainActor in StripePoller.shared.pollNow() } }
-                                .font(.system(size: 11, weight: .medium))
+                                .font(.qimah(size: 11, weight: .medium))
                                 .foregroundColor(Color(hex: "#0570DE").opacity(0.85))
                                 .buttonStyle(.plain)
                         }
                     }
                     if task.id == "integration_calcom" && isConfigured {
                         Button("Refresh") { Task { @MainActor in CalcomPoller.shared.pollNow() } }
-                            .font(.system(size: 11, weight: .medium))
+                            .font(.qimah(size: 11, weight: .medium))
                             .foregroundColor(Color(hex: "#C9956A").opacity(0.85))
                             .buttonStyle(.plain)
                     }
@@ -1195,8 +1196,8 @@ struct IntegrationCardView: View {
                         Button("Settings…") {
                             NotificationCenter.default.post(name: .openFullSettings, object: nil)
                         }
-                        .font(.system(size: 11))
-                        .foregroundColor(Color(hex: "#8E939C"))
+                        .font(.qimah(size: 11))
+                        .foregroundColor(Q.muted)
                         .buttonStyle(.plain)
                     }
                 }
@@ -1251,11 +1252,11 @@ struct VercelDeploymentListView: View {
                     .fill(Color(hex: "#7C5CFF"))
                     .frame(width: 7, height: 7)
                 Text("Vercel")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Color(hex: "#F5F6F8"))
+                    .font(.qimah(size: 12, weight: .semibold))
+                    .foregroundColor(Q.text)
                 Text("Deployments")
-                    .font(.system(size: 11))
-                    .foregroundColor(Color(hex: "#8E939C"))
+                    .font(.qimah(size: 11))
+                    .foregroundColor(Q.muted)
             }
             .padding(.top, 6)
             .padding(.leading, 108)
@@ -1269,17 +1270,17 @@ struct VercelDeploymentListView: View {
                     HStack(spacing: 5) {
                         Circle().fill(accent).frame(width: 5, height: 5)
                         Text(first.projectName)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(Color(hex: "#C5C8CD"))
+                            .font(.qimah(size: 11, weight: .medium))
+                            .foregroundColor(Q.soft)
                             .lineLimit(1).truncationMode(.tail)
                             .layoutPriority(1)
                         Text(first.timeAgo)
-                            .font(.system(size: 10))
-                            .foregroundColor(Color(hex: "#6B7079"))
+                            .font(.qimah(size: 10))
+                            .foregroundColor(Q.dim)
                         Button(action: onOpenDetail) {
                             Image(systemName: "ellipsis")
-                                .font(.system(size: 8, weight: .medium))
-                                .foregroundColor(Color(hex: "#6B7079"))
+                                .font(.qimah(size: 8, weight: .medium))
+                                .foregroundColor(Q.dim)
                                 .frame(width: 18, height: 18)
                                 .contentShape(Rectangle())
                         }
@@ -1297,13 +1298,13 @@ struct VercelDeploymentListView: View {
                     HStack(spacing: 5) {
                         Circle().fill(accent).frame(width: 5, height: 5)
                         Text(dep.projectName)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(Color(hex: "#9398A1"))
+                            .font(.qimah(size: 11, weight: .medium))
+                            .foregroundColor(Q.muted)
                             .lineLimit(1).truncationMode(.tail)
                             .layoutPriority(1)
                         Text(dep.timeAgo)
-                            .font(.system(size: 10))
-                            .foregroundColor(Color(hex: "#6B7079"))
+                            .font(.qimah(size: 10))
+                            .foregroundColor(Q.dim)
                     }
                     .padding(.horizontal, 8).padding(.vertical, 3)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -1332,8 +1333,8 @@ struct VercelDetailView: View {
             HStack(spacing: 7) {
                 Button(action: onClose) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(Color(hex: "#6B7079"))
+                        .font(.qimah(size: 10, weight: .semibold))
+                        .foregroundColor(Q.dim)
                         .frame(width: 28, height: 28)
                         .contentShape(Rectangle())
                 }
@@ -1341,13 +1342,13 @@ struct VercelDetailView: View {
 
                 Circle().fill(accent).frame(width: 6, height: 6)
                 Text(deployment.projectName)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(Color(hex: "#F5F6F8"))
+                    .font(.qimah(size: 11, weight: .semibold))
+                    .foregroundColor(Q.text)
                     .lineLimit(1).truncationMode(.middle)
                     .layoutPriority(1)
                 Spacer(minLength: 2)
                 Text(deployment.statusLabel)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.qimah(size: 10, weight: .medium))
                     .foregroundColor(accent)
                     .padding(.horizontal, 6).padding(.vertical, 2)
                     .background(accent.opacity(0.14))
@@ -1358,19 +1359,19 @@ struct VercelDetailView: View {
             VStack(alignment: .leading, spacing: 4) {
                 if let commit = deployment.commitMessage {
                     Text(commit)
-                        .font(.system(size: 10.5))
-                        .foregroundColor(Color(hex: "#C5C8CD"))
+                        .font(.qimah(size: 10.5))
+                        .foregroundColor(Q.soft)
                         .lineLimit(2)
                 }
                 HStack(spacing: 8) {
                     if let branch = deployment.branch {
                         Label(branch, systemImage: "arrow.branch")
-                            .font(.system(size: 10))
-                            .foregroundColor(Color(hex: "#6B7079"))
+                            .font(.qimah(size: 10))
+                            .foregroundColor(Q.dim)
                     }
                     Text(deployment.timeAgo + " ago")
-                        .font(.system(size: 10))
-                        .foregroundColor(Color(hex: "#6B7079"))
+                        .font(.qimah(size: 10))
+                        .foregroundColor(Q.dim)
                 }
                 Button(action: {
                     if let url = URL(string: "https://\(deployment.url)") {
@@ -1420,16 +1421,16 @@ struct ResendCardView: View {
                     .fill(Color(hex: "#22C55E"))
                     .frame(width: 7, height: 7)
                 Text("Resend")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Color(hex: "#F5F6F8"))
+                    .font(.qimah(size: 12, weight: .semibold))
+                    .foregroundColor(Q.text)
                 Text("Emails")
-                    .font(.system(size: 11))
-                    .foregroundColor(Color(hex: "#8E939C"))
+                    .font(.qimah(size: 11))
+                    .foregroundColor(Q.muted)
                 if let total {
                     ResendPulseDot()
                     Text("\(total)")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(Color(hex: "#C5C8CD"))
+                        .font(.qimah(size: 11, weight: .medium))
+                        .foregroundColor(Q.soft)
                         .monospacedDigit()
                 }
             }
@@ -1444,16 +1445,16 @@ struct ResendCardView: View {
                     HStack(spacing: 5) {
                         Circle().fill(accent).frame(width: 5, height: 5)
                         Text(first.recipientShort)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(Color(hex: "#C5C8CD"))
+                            .font(.qimah(size: 11, weight: .medium))
+                            .foregroundColor(Q.soft)
                             .lineLimit(1).truncationMode(.tail)
                             .layoutPriority(1)
                         Text(first.timeAgo)
-                            .font(.system(size: 10))
-                            .foregroundColor(Color(hex: "#6B7079"))
+                            .font(.qimah(size: 10))
+                            .foregroundColor(Q.dim)
                         if !first.subject.isEmpty {
                             Text(first.subject)
-                                .font(.system(size: 10))
+                                .font(.qimah(size: 10))
                                 .foregroundColor(Color(hex: "#4D5159"))
                                 .lineLimit(1).truncationMode(.tail)
                         }
@@ -1469,13 +1470,13 @@ struct ResendCardView: View {
                     HStack(spacing: 5) {
                         Circle().fill(accent).frame(width: 5, height: 5)
                         Text(email.recipientShort)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(Color(hex: "#9398A1"))
+                            .font(.qimah(size: 11, weight: .medium))
+                            .foregroundColor(Q.muted)
                             .lineLimit(1).truncationMode(.tail)
                             .layoutPriority(1)
                         Text(email.timeAgo)
-                            .font(.system(size: 10))
-                            .foregroundColor(Color(hex: "#6B7079"))
+                            .font(.qimah(size: 10))
+                            .foregroundColor(Q.dim)
                     }
                     .padding(.horizontal, 8).padding(.vertical, 3)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -1503,11 +1504,11 @@ struct GitHubStatsCardView: View {
                     .fill(Color(hex: "#F4505E"))
                     .frame(width: 7, height: 7)
                 Text("GitHub")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Color(hex: "#F5F6F8"))
+                    .font(.qimah(size: 12, weight: .semibold))
+                    .foregroundColor(Q.text)
                 Text("Overview")
-                    .font(.system(size: 11))
-                    .foregroundColor(Color(hex: "#8E939C"))
+                    .font(.qimah(size: 11))
+                    .foregroundColor(Q.muted)
             }
             .padding(.top, 6)
             .padding(.leading, 108)
@@ -1517,7 +1518,7 @@ struct GitHubStatsCardView: View {
             VStack(alignment: .leading, spacing: 5) {
                 StatRow(icon: "star.fill", color: "#F5A524",
                         label: "Total stars", value: formatCount(stats.totalStars))
-                StatRow(icon: "square.stack.fill", color: "#6B7079",
+                StatRow(icon: "square.stack.fill", color: "#6F8B83",
                         label: "Repositories", value: "\(stats.totalRepos)")
             }
             .padding(.top, 8)
@@ -1543,16 +1544,16 @@ private struct StatRow: View {
     var body: some View {
         HStack(spacing: 7) {
             Image(systemName: icon)
-                .font(.system(size: 10))
+                .font(.qimah(size: 10))
                 .foregroundColor(Color(hex: color))
                 .frame(width: 14)
             Text(label)
-                .font(.system(size: 11))
-                .foregroundColor(Color(hex: "#6B7079"))
+                .font(.qimah(size: 11))
+                .foregroundColor(Q.dim)
             Spacer()
             Text(value)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(Color(hex: "#C5C8CD"))
+                .font(.qimah(size: 12, weight: .semibold))
+                .foregroundColor(Q.soft)
                 .monospacedDigit()
         }
         .frame(maxWidth: .infinity)
@@ -1572,11 +1573,11 @@ struct StripeCardView: View {
                     .fill(Color(hex: "#0570DE"))
                     .frame(width: 7, height: 7)
                 Text("Stripe")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Color(hex: "#F5F6F8"))
+                    .font(.qimah(size: 12, weight: .semibold))
+                    .foregroundColor(Q.text)
                 Text("Payments")
-                    .font(.system(size: 11))
-                    .foregroundColor(Color(hex: "#8E939C"))
+                    .font(.qimah(size: 11))
+                    .foregroundColor(Q.muted)
             }
             .padding(.top, 6)
             .padding(.leading, 108)
@@ -1586,12 +1587,12 @@ struct StripeCardView: View {
             HStack(alignment: .firstTextBaseline, spacing: 3) {
                 Text(balanceFormatted)
                     .font(.system(size: 20, weight: .bold, design: .monospaced))
-                    .foregroundColor(Color(hex: "#F5F6F8"))
+                    .foregroundColor(Q.text)
                     .contentTransition(.numericText(countsDown: false))
                     .animation(.easeOut(duration: 1.2), value: appState.stripeDisplayBalance)
                 Text(appState.stripeCurrency.uppercased())
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundColor(Color(hex: "#6B7079"))
+                    .font(.qimah(size: 9, weight: .semibold))
+                    .foregroundColor(Q.dim)
                     .padding(.bottom, 1)
             }
             .padding(.leading, 108)
@@ -1630,8 +1631,8 @@ private struct StripePaymentRow: View {
         HStack(spacing: 5) {
             Circle().fill(accent).frame(width: 5, height: 5)
             Text(payment.description ?? "Payment")
-                .font(.system(size: 11))
-                .foregroundColor(Color(hex: "#C5C8CD"))
+                .font(.qimah(size: 11))
+                .foregroundColor(Q.soft)
                 .lineLimit(1).truncationMode(.tail)
                 .layoutPriority(1)
             Spacer(minLength: 4)
@@ -1640,8 +1641,8 @@ private struct StripePaymentRow: View {
                 .foregroundColor(Color(hex: "#22C55E"))
                 .fixedSize()
             Text(payment.timeAgo)
-                .font(.system(size: 10))
-                .foregroundColor(Color(hex: "#6B7079"))
+                .font(.qimah(size: 10))
+                .foregroundColor(Q.dim)
                 .fixedSize()
         }
         .frame(maxWidth: .infinity)
@@ -1758,21 +1759,21 @@ struct CalcomCalendarView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 6) {
                 Circle().fill(Color(hex: "#C9956A")).frame(width: 7, height: 7)
-                Text("Cal.com").font(.system(size: 12, weight: .semibold)).foregroundColor(Color(hex: "#F5F6F8"))
-                Text("Schedule").font(.system(size: 11)).foregroundColor(Color(hex: "#8E939C"))
+                Text("Cal.com").font(.qimah(size: 12, weight: .semibold)).foregroundColor(Q.text)
+                Text("Schedule").font(.qimah(size: 11)).foregroundColor(Q.muted)
             }
             .padding(.top, 6).padding(.leading, 108).padding(.trailing, 36)
 
             HStack(spacing: 0) {
                 Button { goBack() } label: {
-                    Image(systemName: "chevron.left").font(.system(size: 8, weight: .semibold))
-                        .foregroundColor(Color(hex: "#6B7079")).frame(width: 18, height: 16)
+                    Image(systemName: "chevron.left").font(.qimah(size: 8, weight: .semibold))
+                        .foregroundColor(Q.dim).frame(width: 18, height: 16)
                 }.buttonStyle(.plain)
-                Text(navLabel).font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(Color(hex: "#C5C8CD")).frame(maxWidth: .infinity)
+                Text(navLabel).font(.qimah(size: 10, weight: .semibold))
+                    .foregroundColor(Q.soft).frame(maxWidth: .infinity)
                 Button { goForward() } label: {
-                    Image(systemName: "chevron.right").font(.system(size: 8, weight: .semibold))
-                        .foregroundColor(Color(hex: "#6B7079")).frame(width: 18, height: 16)
+                    Image(systemName: "chevron.right").font(.qimah(size: 8, weight: .semibold))
+                        .foregroundColor(Q.dim).frame(width: 18, height: 16)
                 }.buttonStyle(.plain)
             }
             .padding(.leading, 108).padding(.trailing, 12).padding(.top, 2)
@@ -1804,7 +1805,7 @@ private struct CalcomWeekRow: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            Text(weekLabel).font(.system(size: 7)).foregroundColor(Color(hex: "#4B5563"))
+            Text(weekLabel).font(.qimah(size: 7)).foregroundColor(Q.dim)
                 .frame(width: 26, alignment: .leading)
             ForEach(0..<7, id: \.self) { i in
                 if let day = week[i] {
@@ -1825,8 +1826,8 @@ private struct CalcomDayCell: View {
     var body: some View {
         VStack(spacing: 1) {
             Text("\(Calendar.current.component(.day, from: day))")
-                .font(.system(size: 9, weight: isToday ? .bold : .regular))
-                .foregroundColor(isToday ? .white : Color(hex: "#9398A1"))
+                .font(.qimah(size: 9, weight: isToday ? .bold : .regular))
+                .foregroundColor(isToday ? .white : Q.muted)
                 .frame(width: 13, height: 13)
                 .background(isToday ? Color(hex: "#C9956A").opacity(0.55) : Color.clear)
                 .clipShape(Circle())
@@ -1846,16 +1847,16 @@ struct CalcomDayView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 4) {
                 Button(action: onBack) {
-                    Image(systemName: "chevron.left").font(.system(size: 9, weight: .semibold))
-                        .foregroundColor(Color(hex: "#6B7079")).frame(width: 22, height: 22).contentShape(Rectangle())
+                    Image(systemName: "chevron.left").font(.qimah(size: 9, weight: .semibold))
+                        .foregroundColor(Q.dim).frame(width: 22, height: 22).contentShape(Rectangle())
                 }.buttonStyle(.plain).padding(.leading, 108)
-                Text(dayLabel).font(.system(size: 11, weight: .semibold)).foregroundColor(Color(hex: "#C5C8CD"))
+                Text(dayLabel).font(.qimah(size: 11, weight: .semibold)).foregroundColor(Q.soft)
                 Spacer()
             }
             .padding(.top, 6).padding(.trailing, 12)
 
             if bookings.isEmpty {
-                Text("No calls scheduled").font(.system(size: 11)).foregroundColor(Color(hex: "#6B7079"))
+                Text("No calls scheduled").font(.qimah(size: 11)).foregroundColor(Q.dim)
                     .padding(.leading, 116).padding(.top, 8)
             } else {
                 VStack(alignment: .leading, spacing: 3) {
@@ -1866,11 +1867,11 @@ struct CalcomDayView: View {
                                 Text(b.timeLabel)
                                     .font(.system(size: 10, weight: .medium, design: .monospaced))
                                     .foregroundColor(Color(hex: "#C9956A")).fixedSize()
-                                Text(b.title).font(.system(size: 11)).foregroundColor(Color(hex: "#C5C8CD"))
+                                Text(b.title).font(.qimah(size: 11)).foregroundColor(Q.soft)
                                     .lineLimit(1).truncationMode(.tail).layoutPriority(1)
                                 Spacer(minLength: 2)
-                                Image(systemName: "chevron.right").font(.system(size: 8))
-                                    .foregroundColor(Color(hex: "#4B5563"))
+                                Image(systemName: "chevron.right").font(.qimah(size: 8))
+                                    .foregroundColor(Q.dim)
                             }
                             .padding(.horizontal, 6).padding(.vertical, 3)
                             .background(Color(hex: "#C9956A").opacity(0.06))
@@ -1897,8 +1898,8 @@ struct CalcomBookingDetailView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 4) {
                 Button(action: onBack) {
-                    Image(systemName: "chevron.left").font(.system(size: 9, weight: .semibold))
-                        .foregroundColor(Color(hex: "#6B7079")).frame(width: 22, height: 22).contentShape(Rectangle())
+                    Image(systemName: "chevron.left").font(.qimah(size: 9, weight: .semibold))
+                        .foregroundColor(Q.dim).frame(width: 22, height: 22).contentShape(Rectangle())
                 }.buttonStyle(.plain).padding(.leading, 108)
                 Text(booking.timeLabel)
                     .font(.system(size: 10, weight: .medium, design: .monospaced))
@@ -1908,8 +1909,8 @@ struct CalcomBookingDetailView: View {
             .padding(.top, 6).padding(.trailing, 12)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(booking.title).font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Color(hex: "#F5F6F8")).lineLimit(1)
+                Text(booking.title).font(.qimah(size: 12, weight: .semibold))
+                    .foregroundColor(Q.text).lineLimit(1)
                 if let name = booking.attendeeName, !name.isEmpty {
                     CalcomDetailRow(icon: "person.fill", text: name, size: 11)
                 }
@@ -1935,8 +1936,8 @@ private struct CalcomDetailRow: View {
     var lines: Int = 1
     var body: some View {
         HStack(alignment: .top, spacing: 4) {
-            Image(systemName: icon).font(.system(size: 9)).foregroundColor(Color(hex: "#6B7079")).frame(width: 10)
-            Text(text).font(.system(size: size)).foregroundColor(Color(hex: "#9398A1"))
+            Image(systemName: icon).font(.qimah(size: 9)).foregroundColor(Q.dim).frame(width: 10)
+            Text(text).font(.qimah(size: size)).foregroundColor(Q.muted)
                 .lineLimit(lines).truncationMode(truncate ? .middle : .tail)
         }
     }
@@ -1950,9 +1951,9 @@ struct NotionCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 6) {
-                Circle().fill(Color(hex: "#E8E8E8")).frame(width: 7, height: 7)
-                Text("Notion").font(.system(size: 12, weight: .semibold)).foregroundColor(Color(hex: "#F5F6F8"))
-                Text("Recent").font(.system(size: 11)).foregroundColor(Color(hex: "#8E939C"))
+                Circle().fill(Q.text).frame(width: 7, height: 7)
+                Text("Notion").font(.qimah(size: 12, weight: .semibold)).foregroundColor(Q.text)
+                Text("Recent").font(.qimah(size: 11)).foregroundColor(Q.muted)
             }
             .padding(.top, 6).padding(.leading, 108).padding(.trailing, 36)
 
@@ -1963,17 +1964,17 @@ struct NotionCardView: View {
                     } label: {
                         HStack(spacing: 6) {
                             if let emoji = page.emoji {
-                                Text(emoji).font(.system(size: 10)).frame(width: 14)
+                                Text(emoji).font(.qimah(size: 10)).frame(width: 14)
                             } else {
-                                Image(systemName: "doc.text").font(.system(size: 9))
-                                    .foregroundColor(Color(hex: "#6B7079")).frame(width: 14)
+                                Image(systemName: "doc.text").font(.qimah(size: 9))
+                                    .foregroundColor(Q.dim).frame(width: 14)
                             }
-                            Text(page.title).font(.system(size: 11))
-                                .foregroundColor(Color(hex: "#C5C8CD"))
+                            Text(page.title).font(.qimah(size: 11))
+                                .foregroundColor(Q.soft)
                                 .lineLimit(1).truncationMode(.tail).layoutPriority(1)
                             Spacer(minLength: 4)
-                            Text(page.timeAgo).font(.system(size: 9))
-                                .foregroundColor(Color(hex: "#4B5563"))
+                            Text(page.timeAgo).font(.qimah(size: 9))
+                                .foregroundColor(Q.dim)
                         }
                         .padding(.horizontal, 6).padding(.vertical, 4)
                         .contentShape(Rectangle())
@@ -2006,8 +2007,8 @@ struct N8nDetailView: View {
             HStack(spacing: 7) {
                 Button(action: onClose) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(Color(hex: "#6B7079"))
+                        .font(.qimah(size: 10, weight: .semibold))
+                        .foregroundColor(Q.dim)
                         .frame(width: 28, height: 28)   // large hit area
                         .contentShape(Rectangle())
                 }
@@ -2016,15 +2017,15 @@ struct N8nDetailView: View {
                 Circle().fill(accent).frame(width: 6, height: 6)
 
                 Text(task.steps.first ?? "Workflow")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(Color(hex: "#F5F6F8"))
+                    .font(.qimah(size: 11, weight: .semibold))
+                    .foregroundColor(Q.text)
                     .lineLimit(1).truncationMode(.middle)
                     .layoutPriority(1)
 
                 Spacer(minLength: 2)
 
                 Text(statusLabel)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.qimah(size: 10, weight: .medium))
                     .foregroundColor(accent)
                     .padding(.horizontal, 6).padding(.vertical, 2)
                     .background(accent.opacity(0.14))
@@ -2036,7 +2037,7 @@ struct N8nDetailView: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     Text(detail)
                         .font(.system(size: 10.5, design: .monospaced))
-                        .foregroundColor(Color(hex: "#9398A1"))
+                        .foregroundColor(Q.muted)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .lineSpacing(2)
                         .textSelection(.enabled)
@@ -2044,8 +2045,8 @@ struct N8nDetailView: View {
                 .frame(maxHeight: 88)
             } else {
                 Text(success ? "Completed successfully." : "No error details available.")
-                    .font(.system(size: 11))
-                    .foregroundColor(Color(hex: "#6B7079"))
+                    .font(.qimah(size: 11))
+                    .foregroundColor(Q.dim)
             }
         }
         .padding(.top, 8)
@@ -2183,11 +2184,11 @@ struct TickerRowView: View {
             // Icon: chevron fades out first half, checkmark fades in second half
             ZStack {
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundColor(Color(hex: "#8E939C"))
+                    .font(.qimah(size: 9, weight: .medium))
+                    .foregroundColor(Q.muted)
                     .opacity(max(0, 1 - phase * 2))
                 Image(systemName: "checkmark")
-                    .font(.system(size: 8, weight: .regular))
+                    .font(.qimah(size: 8, weight: .regular))
                     .foregroundColor(Color(hex: "#454850"))
                     .opacity(max(0, phase * 2 - 1))
             }
@@ -2198,8 +2199,8 @@ struct TickerRowView: View {
                 TickerShimmerText(text: text)
                     .opacity(max(0, 1 - phase * 1.6))
                 Text(text)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(Color(hex: "#6B7079"))
+                    .font(.qimah(size: 13, weight: .medium))
+                    .foregroundColor(Q.dim)
                     .lineLimit(1).truncationMode(.tail)
                     .opacity(min(1, max(0, phase * 2 - 0.4)))
             }
@@ -2219,13 +2220,13 @@ struct TickerShimmerText: View {
             // phase sweeps -0.1 → 1.1 so white peak enters from left and exits right
             let phase = p * 1.2 - 0.1
             Text(text)
-                .font(.system(size: 13, weight: .medium))
+                .font(.qimah(size: 13, weight: .medium))
                 .lineLimit(1)
                 .truncationMode(.tail)
                 .foregroundStyle(LinearGradient(stops: [
-                    .init(color: Color(hex: "#7c818a"), location: max(0, phase - 0.3)),
+                    .init(color: Q.dim, location: max(0, phase - 0.3)),
                     .init(color: Color(hex: "#F2F3F5"), location: max(0, min(1, phase))),
-                    .init(color: Color(hex: "#7c818a"), location: min(1, phase + 0.3)),
+                    .init(color: Q.dim, location: min(1, phase + 0.3)),
                 ], startPoint: .leading, endPoint: .trailing))
         }
     }
@@ -2289,7 +2290,7 @@ struct AgentPill: View {
                     Capsule()
                         .fill(isHovered
                               ? Color(hex: task.color).opacity(0.18)
-                              : Color(hex: "#0E0F11"))
+                              : Q.raised)
                     Capsule()
                         .stroke(Color(hex: task.color).opacity(isHovered ? 0.55 : 0.14), lineWidth: 1)
                     HStack(spacing: 0) {
@@ -2300,10 +2301,10 @@ struct AgentPill: View {
                         Spacer()
                     }
                     Text(displayName)
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.qimah(size: 10, weight: .semibold))
                         .foregroundColor(isHovered
                                          ? Color(hex: task.color).lighter(by: 0.3)
-                                         : Color(hex: "#6B7079"))
+                                         : Q.text)
                         .lineLimit(1)
                         .truncationMode(.tail)
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -2352,13 +2353,13 @@ struct PillBadgeView: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(Color(hex: "#0B0C0E"))
+                .fill(Q.deep)
                 .frame(width: 14, height: 14)
             Circle()
                 .fill(badgeColor)
                 .frame(width: 12, height: 12)
             Image(systemName: icon)
-                .font(.system(size: 6, weight: .bold))
+                .font(.qimah(size: 6, weight: .bold))
                 .foregroundColor(.black)
         }
         .shadow(color: badgeColor.opacity(0.6), radius: 4, x: 0, y: 0)
@@ -2416,7 +2417,7 @@ struct CardBackground<Content: View>: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color(hex: "#141518"))
+                .fill(Q.card)
                 .overlay(
                     RadialGradient(
                         gradient: Gradient(stops: [
@@ -2431,7 +2432,7 @@ struct CardBackground<Content: View>: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.white.opacity(0.035), lineWidth: 1)
+                        .stroke(Q.border, lineWidth: 1)
                 )
 
             if let content = content {
@@ -2450,7 +2451,7 @@ extension CardBackground where Content == EmptyView {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color(hex: "#141518"))
+                .fill(Q.card)
                 .overlay(
                     RadialGradient(
                         gradient: Gradient(stops: [
@@ -2465,7 +2466,7 @@ extension CardBackground where Content == EmptyView {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(Color.white.opacity(0.035), lineWidth: 1)
+                        .stroke(Q.border, lineWidth: 1)
                 )
         }
     }
@@ -2481,9 +2482,9 @@ struct AgentWho: View {
         HStack(spacing: 7) {
             if let task = task {
                 Circle().fill(Color(hex: task.color)).frame(width: 8, height: 8)
-                Text(task.name).font(.system(size: 12, weight: .semibold)).foregroundColor(Color(hex: "#F5F6F8"))
+                Text(task.name).font(.qimah(size: 12, weight: .semibold)).foregroundColor(Q.text)
             }
-            Text(label).font(.system(size: 12)).foregroundColor(Color(hex: "#8E939C"))
+            Text(label).font(.qimah(size: 12)).foregroundColor(Q.muted)
         }
     }
 }
@@ -2498,7 +2499,7 @@ struct CodeBlock: View {
             .background(Color.white.opacity(0.07))
             .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.06)))
             .clipShape(RoundedRectangle(cornerRadius: 10))
-            .foregroundColor(Color(hex: "#E8E9EC"))
+            .foregroundColor(Q.text)
     }
 }
 
@@ -2521,8 +2522,8 @@ struct ContextChip: View {
                 .fill(LinearGradient(colors: [Color(hex: "#FF6B5B"), Color(hex: "#F7B32B"), Color(hex: "#2DD4A7"), Color(hex: "#38BDF8"), Color(hex: "#A78BFA")], startPoint: .topLeading, endPoint: .bottomTrailing))
                 .frame(width: 7, height: 7)
             Text(label)
-                .font(.system(size: 11.5))
-                .foregroundColor(Color(hex: "#F1F2F4"))
+                .font(.qimah(size: 11.5))
+                .foregroundColor(Q.text)
         }
         .padding(.horizontal, 10).padding(.vertical, 4)
         .background(Color.white.opacity(0.1))
@@ -2546,13 +2547,13 @@ struct MailField: View {
     var body: some View {
         HStack(spacing: 8) {
             Text(label)
-                .font(.system(size: 12.5))
+                .font(.qimah(size: 12.5))
                 .foregroundColor(Color(hex: "#80858E"))
                 .frame(width: 44, alignment: .leading)
             TextField(placeholder, text: $text)
                 .textFieldStyle(.plain)
-                .font(.system(size: 12.5))
-                .foregroundColor(Color(hex: "#F5F6F8"))
+                .font(.qimah(size: 12.5))
+                .foregroundColor(Q.text)
         }
         .padding(.horizontal, 10).padding(.vertical, 6)
         .background(Color.white.opacity(0.06))
@@ -2569,9 +2570,9 @@ struct ShimmeringText: View {
             .foregroundStyle(
                 LinearGradient(
                     stops: [
-                        .init(color: Color(hex: "#7c818a"), location: 0),
+                        .init(color: Q.dim, location: 0),
                         .init(color: .white, location: 0.4),
-                        .init(color: Color(hex: "#7c818a"), location: 0.7)
+                        .init(color: Q.dim, location: 0.7)
                     ],
                     startPoint: .leading,
                     endPoint: .trailing
@@ -2616,17 +2617,17 @@ struct PrimaryButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 7) {
-                Text(title).font(.system(size: 12.5, weight: .medium))
+                Text(title).font(.qimah(size: 12.5, weight: .medium))
                 if let k = kbd {
-                    Text(k).font(.system(size: 10.5))
+                    Text(k).font(.qimah(size: 10.5))
                         .padding(.horizontal, 4)
                         .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.black.opacity(0.4)))
                         .opacity(0.55)
                 }
             }
             .padding(.horizontal, 13).padding(.vertical, 7)
-            .background(Color(hex: "#F5F6F8"))
-            .foregroundColor(Color(hex: "#0B0C0E"))
+            .background(Q.text)
+            .foregroundColor(Q.deep)
             .clipShape(Capsule())
         }
         .buttonStyle(.plain)
@@ -2645,9 +2646,9 @@ struct SecondaryButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 7) {
-                Text(title).font(.system(size: 12.5, weight: .medium))
+                Text(title).font(.qimah(size: 12.5, weight: .medium))
                 if let k = kbd {
-                    Text(k).font(.system(size: 10.5))
+                    Text(k).font(.qimah(size: 10.5))
                         .padding(.horizontal, 4)
                         .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.white.opacity(0.4)))
                         .opacity(0.55)
@@ -2655,7 +2656,7 @@ struct SecondaryButton: View {
             }
             .padding(.horizontal, 13).padding(.vertical, 7)
             .background(Color.white.opacity(0.09))
-            .foregroundColor(Color(hex: "#F1F2F4"))
+            .foregroundColor(Q.text)
             .clipShape(Capsule())
         }
         .buttonStyle(.plain)
@@ -2676,7 +2677,7 @@ struct SendButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .frame(width: 28, height: 28)
-            .background(Color(hex: "#F5F6F8"))
+            .background(Q.text)
             .clipShape(Circle())
             .scaleEffect(configuration.isPressed ? 0.94 : 1)
     }
@@ -2717,8 +2718,8 @@ struct SettingsIslandView: View {
                         .scaleEffect(0.75)
                         .frame(width: 44)
                     Text("Sound")
-                        .font(.system(size: 12.5))
-                        .foregroundColor(Color(hex: "#C5C8CD"))
+                        .font(.qimah(size: 12.5))
+                        .foregroundColor(Q.soft)
                     Slider(value: $state.soundVolume, in: 0...0.2)
                         .frame(width: 72)
                         .opacity(state.soundEnabled ? 1 : 0.4)
@@ -2727,22 +2728,22 @@ struct SettingsIslandView: View {
                 // Auto-close row
                 HStack(spacing: 10) {
                     Image(systemName: "timer")
-                        .font(.system(size: 12))
-                        .foregroundColor(Color(hex: "#8E939C"))
+                        .font(.qimah(size: 12))
+                        .foregroundColor(Q.muted)
                         .frame(width: 16)
                     Text("Auto-close · \(Int(state.autoCloseInterval))s")
-                        .font(.system(size: 12))
-                        .foregroundColor(Color(hex: "#C5C8CD"))
+                        .font(.qimah(size: 12))
+                        .foregroundColor(Q.soft)
                     Spacer()
                     HStack(spacing: 6) {
                         ForEach([10, 15, 30], id: \.self) { s in
                             Button("\(s)s") {
                                 state.autoCloseInterval = Double(s)
                             }
-                            .font(.system(size: 11))
+                            .font(.qimah(size: 11))
                             .padding(.horizontal, 7).padding(.vertical, 3)
-                            .background(state.autoCloseInterval == Double(s) ? Color(hex: "#252830") : Color.clear)
-                            .foregroundColor(state.autoCloseInterval == Double(s) ? Color(hex: "#F5F6F8") : Color(hex: "#6B7079"))
+                            .background(state.autoCloseInterval == Double(s) ? Q.raised : Color.clear)
+                            .foregroundColor(state.autoCloseInterval == Double(s) ? Q.text : Q.dim)
                             .clipShape(Capsule())
                             .buttonStyle(.plain)
                         }
@@ -2757,8 +2758,8 @@ struct SettingsIslandView: View {
                     Button("Settings…") {
                         NotificationCenter.default.post(name: .openFullSettings, object: nil)
                     }
-                    .font(.system(size: 11.5))
-                    .foregroundColor(Color(hex: "#8E939C"))
+                    .font(.qimah(size: 11.5))
+                    .foregroundColor(Q.muted)
                     .buttonStyle(.plain)
                 }
             }
@@ -2779,8 +2780,8 @@ struct StatusBadge: View {
                 .fill(ok ? Color(hex: "#22C55E") : Color(hex: "#F4505E"))
                 .frame(width: 6, height: 6)
             Text(label)
-                .font(.system(size: 11))
-                .foregroundColor(Color(hex: "#8E939C"))
+                .font(.qimah(size: 11))
+                .foregroundColor(Q.muted)
         }
     }
 }

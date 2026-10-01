@@ -71,6 +71,17 @@ final class IslandWindowController: NSWindowController {
     }
 
     private func setupPanel(screen: NSScreen) {
+        // Debug: `notifyutil`-style snapshot of the island without Screen Recording permission.
+        // Post the distributed notification "coucou.snapshot" with a file path as object.
+        DistributedNotificationCenter.default().addObserver(forName: .init("coucou.snapshot"), object: nil, queue: .main) { [weak self] note in
+            let path = (note.object as? String) ?? "/tmp/coucou-snapshot.png"
+            Task { @MainActor in
+                guard let view = self?.window?.contentView,
+                      let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
+                view.cacheDisplay(in: view.bounds, to: rep)
+                try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
+            }
+        }
         guard let panel = window as? IslandPanel else { return }
         panel.backgroundColor = .clear
         panel.isOpaque = false
@@ -153,6 +164,10 @@ final class IslandWindowController: NSWindowController {
     // MARK: - FSM wiring
 
     private func wireFSM() {
+        fsm.holdOpen = { [weak self] in
+            guard let self else { return false }
+            return self.state.view == .live && LiveFeed.shared.isActive
+        }
         fsm.onTransition = { [weak self] from, to in
             guard let self else { return }
             switch to {
@@ -321,6 +336,7 @@ final class IslandWindowController: NSWindowController {
     func setMode(_ mode: IslandMode) {
         let prev = state.mode
         guard mode != prev else { return }
+        appendAppLog("nb.log", "Island: \(prev) -> \(mode) [view \(state.view)]")
         let shrinking = modeLevel(mode) < modeLevel(prev)
         let anim: Animation = shrinking
             ? .timingCurve(0.45, 0, 0.2, 1, duration: 0.34)
@@ -366,6 +382,14 @@ final class IslandWindowController: NSWindowController {
         // Hook server expand requests (alerts only)
         NotificationCenter.default.addObserver(forName: .hookExpand, object: nil, queue: .main) { [weak self] note in
             guard let self, let view = note.object as? IslandView else { return }
+            if view == .live {
+                appendAppLog("nb.log", "Live: expanding")
+                // Live opens like a normal home view so it collapses on its own once Claude goes quiet.
+                self.expand(to: .live)
+                self.fsm.adoptHome()
+                if !self.wasInIsland { self.fsm.mouseLeft() }
+                return
+            }
             self.expand(to: view)
         }
 

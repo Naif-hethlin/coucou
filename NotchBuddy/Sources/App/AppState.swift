@@ -144,6 +144,11 @@ final class AppState: ObservableObject {
         }
     }
 
+    // Open the Live tab automatically when Claude edits a file — persisted
+    @Published var autoOpenLive: Bool = true {
+        didSet { UserDefaults.standard.set(autoOpenLive, forKey: "autoOpenLive") }
+    }
+
     // Pending API result
     @Published var searchResult: SearchResult? = nil
 
@@ -195,6 +200,7 @@ final class AppState: ObservableObject {
         if let v = ud.object(forKey: "absenceInterval")   as? Double { absenceInterval   = v }
         if let v = ud.object(forKey: "greetThreshold")    as? Double { greetThresholdSeconds = v }
         if let v = ud.object(forKey: "hotkeyEnabled") as? Bool  { hotkeyEnabled = v }
+        if let v = ud.object(forKey: "autoOpenLive") as? Bool { autoOpenLive = v }
         if let v = ud.object(forKey: "hotkeyFlags")   as? Int   { hotkeyFlags = UInt(v) }
         if let v = ud.object(forKey: "hotkeyCode")    as? Int   { hotkeyCode = UInt16(v) }
         if let d = ud.data(forKey: "vercelProjectFilter"),

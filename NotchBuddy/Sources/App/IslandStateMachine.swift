@@ -30,6 +30,9 @@ final class IslandStateMachine {
     private var homeCollapseWork: DispatchWorkItem?
     private var greetCollapseWork: DispatchWorkItem?
 
+    /// While this returns true the expanded island will not auto-collapse (Live tab during work).
+    var holdOpen: (() -> Bool)?
+
     // MARK: – Inputs
 
     /// App launched or debug "launch greeting"
@@ -99,6 +102,13 @@ final class IslandStateMachine {
         DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: item)
     }
 
+    /// The island was opened straight to a view (not via a click): treat it as home
+    /// so the normal collapse timer applies.
+    func adoptHome() {
+        cancelTimers()
+        state = .home
+    }
+
     /// Non-alert work event: show compact from hidden (HookServer reveal)
     func reveal() {
         guard state == .hidden else { return }
@@ -123,6 +133,7 @@ final class IslandStateMachine {
         homeCollapseWork?.cancel()
         let item = DispatchWorkItem { [weak self] in
             guard let self, self.state == .home else { return }
+            if self.holdOpen?() == true { self.scheduleHomeCollapse(); return }
             self.transition(to: .petit)
         }
         homeCollapseWork = item

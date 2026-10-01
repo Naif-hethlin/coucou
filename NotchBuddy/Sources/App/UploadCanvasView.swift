@@ -161,14 +161,14 @@ struct UploadCanvasView: View {
         tCtx.opacity = f.textAlpha
 
         let label = Text("Drop your files here")
-            .font(.system(size:13, weight:.medium))
-            .foregroundColor(Color(hex:"#D5D7DB"))
+            .font(.qimah(size: 13, weight: .medium))
+            .foregroundColor(Q.soft)
         tCtx.draw(label, at: CGPoint(x: USC.TEXT_X, y: USC.TEXT_Y - 4), anchor: .leading)
 
         let chips = ["PDF","Images","Code","Docs"]
         var cx = USC.TEXT_X
         for chip in chips {
-            let chipText = Text(chip).font(.system(size:11, weight:.medium)).foregroundColor(Color(hex:"#B9BDC4"))
+            let chipText = Text(chip).font(.qimah(size: 11, weight: .medium)).foregroundColor(Q.soft)
             // measure approximate width
             let estW = Double(chip.count) * 6.5 + 16
             tCtx.fill(roundedRect(CGRect(x:cx, y:USC.TEXT_Y+9, width:estW, height:18), r:9),
@@ -190,8 +190,8 @@ struct UploadCanvasView: View {
         // Filename label
         let name = state.droppedFile?.name ?? "file"
         let label = Text("Uploading \(name)")
-            .font(.system(size:12.5, weight:.medium))
-            .foregroundColor(Color(hex:"#A9ADB5"))
+            .font(.qimah(size: 12.5, weight: .medium))
+            .foregroundColor(Q.muted)
         pCtx.draw(label, at: CGPoint(x: x0, y: by-30), anchor: .leading)
 
         // Checkmark or percentage
@@ -207,8 +207,8 @@ struct UploadCanvasView: View {
                          style: StrokeStyle(lineWidth:2, lineCap:.round, lineJoin:.round))
         } else {
             let pct = Text("\(Int(f.progress*100)) %")
-                .font(.system(size:12.5, weight:.medium).monospacedDigit())
-                .foregroundColor(Color(hex:"#A9ADB5"))
+                .font(.qimah(size: 12.5, weight: .medium).monospacedDigit())
+                .foregroundColor(Q.muted)
             pCtx.draw(pct, at: CGPoint(x: x1, y: by-30), anchor: .trailing)
         }
 
@@ -264,20 +264,20 @@ struct UploadCanvasView: View {
 
         let name = state.droppedFile?.name ?? "file"
         let titleText = Text("\(name) is ready.")
-            .font(.system(size:14, weight:.semibold))
-            .foregroundColor(Color(hex:"#F5F6F8"))
+            .font(.qimah(size: 14, weight: .semibold))
+            .foregroundColor(Q.text)
         cCtx.draw(titleText, at: CGPoint(x:114, y:80), anchor: .leading)
 
         let subText = Text("What do you want to do with it?")
-            .font(.system(size:12.5))
-            .foregroundColor(Color(hex:"#9398A1"))
+            .font(.qimah(size: 12.5))
+            .foregroundColor(Q.muted)
         cCtx.draw(subText, at: CGPoint(x:114, y:100), anchor: .leading)
 
         // Primary button (white fill)
         cCtx.fill(roundedRect(CGRect(x:114,y:113,width:168,height:26), r:13),
-                  with: .color(Color(hex:"#F5F6F8")))
+                  with: .color(Q.text))
         let btn1 = Text("Ask a question about it")
-            .font(.system(size:12.5, weight:.medium))
+            .font(.qimah(size: 12.5, weight: .medium))
             .foregroundColor(Color(red:0.043,green:0.047,blue:0.055))
         cCtx.draw(btn1, at: CGPoint(x:198, y:126), anchor: .center)
 
@@ -285,8 +285,8 @@ struct UploadCanvasView: View {
         cCtx.fill(roundedRect(CGRect(x:290,y:113,width:120,height:26), r:13),
                   with: .color(Color.white.opacity(0.09)))
         let btn2 = Text("Send by email")
-            .font(.system(size:12.5, weight:.medium))
-            .foregroundColor(Color(hex:"#F1F2F4"))
+            .font(.qimah(size: 12.5, weight: .medium))
+            .foregroundColor(Q.text)
         cCtx.draw(btn2, at: CGPoint(x:350, y:126), anchor: .center)
     }
 
@@ -306,8 +306,8 @@ struct UploadCanvasView: View {
 
         // ── Body gradient ──────────────────────────────────────────
         let bodyGrad = Gradient(stops:[
-            .init(color: Color(hex:"#EDEDEF"), location:0),
-            .init(color: Color(hex:"#C4C5CA"), location:1)
+            .init(color: Q.text, location:0),
+            .init(color: Q.soft, location:1)
         ])
         c.fill(bp, with: .linearGradient(bodyGrad,
             startPoint:  CGPoint(x:  rx*0.7, y: -ry*0.9),
