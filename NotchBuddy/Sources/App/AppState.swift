@@ -150,6 +150,11 @@ final class AppState: ObservableObject {
         didSet { UserDefaults.standard.set(autoOpenLive, forKey: "autoOpenLive") }
     }
 
+    // Pop the notch on the Progress tab when Claude posts a status update — persisted
+    @Published var autoOpenProgress: Bool = true {
+        didSet { UserDefaults.standard.set(autoOpenProgress, forKey: "autoOpenProgress") }
+    }
+
     // Live tab typing speed multiplier (0.25x – 4x) — persisted
     @Published var liveSpeed: Double = 1 {
         didSet { UserDefaults.standard.set(liveSpeed, forKey: "liveSpeed") }
@@ -208,6 +213,7 @@ final class AppState: ObservableObject {
         if let v = ud.object(forKey: "hotkeyEnabled") as? Bool  { hotkeyEnabled = v }
         if let v = ud.object(forKey: "autoOpenLive") as? Bool { autoOpenLive = v }
         if let v = ud.object(forKey: "liveSpeed") as? Double { liveSpeed = v }
+        if let v = ud.object(forKey: "autoOpenProgress") as? Bool { autoOpenProgress = v }
         if let v = ud.object(forKey: "hotkeyFlags")   as? Int   { hotkeyFlags = UInt(v) }
         if let v = ud.object(forKey: "hotkeyCode")    as? Int   { hotkeyCode = UInt16(v) }
         if let d = ud.data(forKey: "vercelProjectFilter"),

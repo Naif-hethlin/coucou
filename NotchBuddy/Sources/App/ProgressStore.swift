@@ -58,6 +58,7 @@ final class ProgressStore: ObservableObject {
 
     func start() {
         readStatusFile()
+        if statusFileDate == nil { statusFileDate = .distantPast }   // the first status written later still pops
         fileTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { _ in
             Task { @MainActor in ProgressStore.shared.readStatusFile() }
         }
@@ -67,11 +68,13 @@ final class ProgressStore: ObservableObject {
         guard let attrs = try? FileManager.default.attributesOfItem(atPath: Self.statusFile),
               let mod = attrs[.modificationDate] as? Date, mod != statusFileDate,
               let text = try? String(contentsOfFile: Self.statusFile, encoding: .utf8) else { return }
+        let isUpdate = statusFileDate != nil
         statusFileDate = mod
         var p = Self.parse(text)
         p.prURLs = Self.prURLs(in: text)
         apply(p)
         updatedAt = mod
+        if isUpdate { NotificationCenter.default.post(name: .progressUpdated, object: nil) }
     }
 
     // MARK: - Rows shown
@@ -355,4 +358,8 @@ final class ProgressStore: ObservableObject {
     func openPR() {
         if let pr, let u = URL(string: pr.url) { NSWorkspace.shared.open(u) }
     }
+}
+
+extension Notification.Name {
+    static let progressUpdated = Notification.Name("coucou.progressUpdated")
 }

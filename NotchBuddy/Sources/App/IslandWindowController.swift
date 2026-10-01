@@ -407,6 +407,18 @@ final class IslandWindowController: NSWindowController {
             self.expand(to: view)
         }
 
+        // New status update from Claude: pop the Progress tab (never interrupts Live).
+        NotificationCenter.default.addObserver(forName: .progressUpdated, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.state.autoOpenProgress, self.state.isPresent else { return }
+                if self.state.mode == .expanded, self.state.view == .live || self.state.view == .progress { return }
+                SoundEngine.shared.play("blip")
+                self.expand(to: .progress)
+                self.fsm.adoptHome()
+                if !self.wasInIsland { self.fsm.mouseLeft() }
+            }
+        }
+
         // boards.qimah.net news (card shipped, something new owed): pop Home on the Qimah card
         NotificationCenter.default.addObserver(forName: .boardsNews, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in

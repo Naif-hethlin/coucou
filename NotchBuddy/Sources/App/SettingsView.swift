@@ -710,6 +710,7 @@ struct AppearanceSettings: View {
 
                 Toggle("Use the Qimah font (IBM Plex Sans Arabic)", isOn: $theme.colors.useQimahFont)
                 Toggle("Open the Live tab when Claude edits a file", isOn: $state.autoOpenLive)
+                Toggle("Open the Progress tab when Claude posts a status update", isOn: $state.autoOpenProgress)
                 HStack(spacing: 8) {
                     Text("Live typing speed")
                     Slider(value: $state.liveSpeed, in: 0.25...4)
