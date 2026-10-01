@@ -23,6 +23,7 @@ struct IslandRootView: View {
 struct IslandContainer: View {
     @ObservedObject var state: AppState
     @ObservedObject private var boards = BoardsStore.shared
+    @ObservedObject private var usage = UsageStore.shared
     @State private var islandWidth:  CGFloat = IslandConst.notchWidth
     @State private var islandHeight: CGFloat = IslandConst.notchHeight
     @State private var cornerRadius: CGFloat = IslandConst.roundedCorner
@@ -113,6 +114,18 @@ struct IslandContainer: View {
                         .scaleEffect(IslandRestingLayout(width: islandWidth, height: islandHeight).miniGridScale)
                         .position(x: islandWidth - 40, y: islandHeight / 2)
                         .transition(.opacity)
+                    if usage.peak >= 90 {
+                        // Claude plan usage is nearly out
+                        Text("\(Int(usage.peak))%")
+                            .font(.system(size: 8.5, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 4)
+                            .frame(minHeight: 13)
+                            .background(Q.del)
+                            .clipShape(Capsule())
+                            .position(x: boards.owed.isEmpty ? 62 : 88, y: islandHeight / 2 - 6)
+                            .help("Claude usage at \(Int(usage.peak))%")
+                    }
                     if !boards.owed.isEmpty {
                         // Owed count from boards.qimah.net, next to Mochi
                         OwedBadge(count: boards.owed.count)

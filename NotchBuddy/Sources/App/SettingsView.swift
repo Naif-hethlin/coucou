@@ -381,6 +381,7 @@ struct SettingsView: View {
     private func saveIntegrations() {
         saveKey("github-token",    value: githubToken)
         saveKey("clickup-token",   value: clickupToken)
+        ClickUpStore.shared.refresh()
         statusMessage = "✓ Integration keys saved."
     }
 

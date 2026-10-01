@@ -144,6 +144,10 @@ struct OverviewView: View {
             NSWorkspace.shared.open(URL(string: "https://app.cal.com/bookings")!)
         case "integration_qimah":
             BoardsStore.shared.openBoards()
+        case "integration_anthropic":
+            NSWorkspace.shared.open(URL(string: "https://claude.ai/settings/usage")!)
+        case "integration_clickup":
+            NSWorkspace.shared.open(URL(string: "https://app.clickup.com")!)
         default:
             // Non-integration real tasks
             if task.source == .n8n {
@@ -985,6 +989,7 @@ struct IntegrationCardView: View {
         case "integration_notion":  return KeychainStore.shared.get("notion-api-key") != nil
         case "integration_calcom":  return KeychainStore.shared.get("calcom-api-key") != nil
         case "integration_qimah":   return true
+        case "integration_anthropic", "integration_clickup": return true
         default: return false
         }
     }
@@ -1002,6 +1007,8 @@ struct IntegrationCardView: View {
         case "integration_notion":  return URL(string: "https://notion.so")
         case "integration_calcom":  return URL(string: "https://app.cal.com/bookings")
         case "integration_qimah":   return URL(string: BoardsStore.base)
+        case "integration_anthropic": return URL(string: "https://claude.ai/settings/usage")
+        case "integration_clickup": return URL(string: "https://app.clickup.com")
         default: return nil
         }
     }
@@ -1060,6 +1067,15 @@ struct IntegrationCardView: View {
             .transition(.opacity)
         } else if task.id == "integration_qimah" {
             QimahBoardsCardView()
+                .transition(.opacity)
+        } else if task.id == "integration_github" {
+            GitHubPRCardView()
+                .transition(.opacity)
+        } else if task.id == "integration_anthropic" {
+            ClaudeUsageCardView()
+                .transition(.opacity)
+        } else if task.id == "integration_clickup" {
+            ClickUpCardView()
                 .transition(.opacity)
         } else if vercelHasActivity {
             VercelDeploymentListView(deployments: appState.vercelDeployments, onOpenDetail: {

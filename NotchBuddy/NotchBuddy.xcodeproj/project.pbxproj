@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0184DBB3CA6DDC2765248716 /* MoreCards.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADFA107E55C5E4CCED7EB457 /* MoreCards.swift */; };
 		0329E76BA4A8FEEA8A6D76E7 /* ClaudeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A83D5410BD030B243ADDCFF4 /* ClaudeService.swift */; };
 		065FCE817315454DE3F85F25 /* IslandViewContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA02B08886939FF6FE0475DD /* IslandViewContent.swift */; };
 		06BF5FD95E03010CAFDBF2D0 /* NotchBuddyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1BD8F3CAA60CF37640759E1 /* NotchBuddyApp.swift */; };
@@ -71,6 +72,7 @@
 		B3EC9CF3C8BD629C3530E8F1 /* sounds in Resources */ = {isa = PBXBuildFile; fileRef = C066E2B991AA4F56B2724263 /* sounds */; };
 		B4FC2C94F9056A5200F811FA /* LiveFeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9D691DE9D55298EF336CAFB /* LiveFeed.swift */; };
 		B605F976F4141435F27CF266 /* IslandRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15A1A8206F73376F4CAF2057 /* IslandRootView.swift */; };
+		B8D8F9A5031C98AE06FBB81F /* MoreCards.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADFA107E55C5E4CCED7EB457 /* MoreCards.swift */; };
 		C0E18D0F6F5F6D131E6066B8 /* GreetingCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C581F7B1A9F14B281B60063E /* GreetingCanvasView.swift */; };
 		C18227D148D99FE6EE3CC51A /* GithubPoller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CB8B6E5E9DA6164F979E88F /* GithubPoller.swift */; };
 		C24D863967D8D32D828ED4B1 /* BotEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4540F630F8BA04AFFFA3979 /* BotEngine.swift */; };
@@ -126,6 +128,7 @@
 		A14A61070D293AB4BBA303F7 /* NotchBuddy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NotchBuddy.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A29F4C0B02BE91654D02AA0C /* BotCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BotCanvasView.swift; sourceTree = "<group>"; };
 		A83D5410BD030B243ADDCFF4 /* ClaudeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeService.swift; sourceTree = "<group>"; };
+		ADFA107E55C5E4CCED7EB457 /* MoreCards.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoreCards.swift; sourceTree = "<group>"; };
 		B14E9D084FC989EF7DE3CBD8 /* IBMPlexSansArabic-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "IBMPlexSansArabic-Bold.ttf"; sourceTree = "<group>"; };
 		B241B043223AFBBFB7418A5E /* UploadCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UploadCanvasView.swift; sourceTree = "<group>"; };
 		B2FDED98F7F6C755A72C97A3 /* SafeWebURL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafeWebURL.swift; sourceTree = "<group>"; };
@@ -171,6 +174,7 @@
 				D710BD7834228045869D0184 /* IslandWindowController.swift */,
 				E9D691DE9D55298EF336CAFB /* LiveFeed.swift */,
 				957308C29639F36C32D23B1B /* LiveView.swift */,
+				ADFA107E55C5E4CCED7EB457 /* MoreCards.swift */,
 				B89DA1A0C21AE3535A1760BB /* N8nPoller.swift */,
 				F1BD8F3CAA60CF37640759E1 /* NotchBuddyApp.swift */,
 				BE03E03D1804B0B92C5C2DAD /* NotionPoller.swift */,
@@ -371,6 +375,7 @@
 				091EC3B2F1060D7EE1317E4E /* IslandWindowController.swift in Sources */,
 				B4FC2C94F9056A5200F811FA /* LiveFeed.swift in Sources */,
 				8B26D975D8957DBEFE7D317D /* LiveView.swift in Sources */,
+				B8D8F9A5031C98AE06FBB81F /* MoreCards.swift in Sources */,
 				0A267EE2955C7AD8E02A296C /* N8nPoller.swift in Sources */,
 				06BF5FD95E03010CAFDBF2D0 /* NotchBuddyApp.swift in Sources */,
 				2F36E3C6C073E968A682AFA4 /* NotionPoller.swift in Sources */,
@@ -416,6 +421,7 @@
 				C61DDE2EC5FDDB39E4AA3B34 /* IslandWindowController.swift in Sources */,
 				AA434BB26F23BEB1BA248367 /* LiveFeed.swift in Sources */,
 				7653C32E004106C1FCA6FDD4 /* LiveView.swift in Sources */,
+				0184DBB3CA6DDC2765248716 /* MoreCards.swift in Sources */,
 				160EDB9D06275E2607DA5151 /* N8nPoller.swift in Sources */,
 				DE05D09A32117582AC93A24A /* NotchBuddyApp.swift in Sources */,
 				78FCEDC8F78B683AB10E6529 /* NotionPoller.swift in Sources */,

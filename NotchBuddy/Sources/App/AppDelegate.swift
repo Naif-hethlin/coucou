@@ -68,6 +68,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         KeychainStore.shared.loadGitHubCLIToken()   // GitHub works from the gh login, no token to paste
         GithubPoller.shared.start()
         BoardsStore.shared.start()
+        GitHubPRStore.shared.start()
+        UsageStore.shared.start()
+        ClickUpStore.shared.start()
         ProgressStore.shared.start()
         NotificationCenter.default.addObserver(self, selector: #selector(openSettings),
                                                name: .openFullSettings, object: nil)

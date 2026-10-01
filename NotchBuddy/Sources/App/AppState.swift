@@ -8,10 +8,15 @@ extension AgentTask {
     static let integrationAgents: [AgentTask] = [
         AgentTask(id: "integration_claude",  name: "VS Code",   color: "#F5F6F8", state: .idle, steps: [], source: .claudeCode, isIntegration: true),
         AgentTask(id: "integration_qimah",   name: "Qimah",     color: "#2A8A62", state: .idle, steps: [], source: .n8n, isIntegration: true),
+        AgentTask(id: "integration_anthropic", name: "Claude",  color: "#D97757", state: .idle, steps: [], source: .n8n, isIntegration: true),
+        AgentTask(id: "integration_clickup", name: "ClickUp",   color: "#7B68EE", state: .idle, steps: [], source: .n8n, isIntegration: true),
         AgentTask(id: "integration_github",  name: "GitHub",    color: "#F4505E", state: .idle, steps: [], source: .n8n, isIntegration: true),
     ]
 
     /// IDs that can be toggled (VS Code is always on and excluded from this list)
+    /// Pills that are always shown and don't use one of the 4 toggle slots.
+    static let alwaysOnIds: Set<String> = ["integration_claude", "integration_qimah", "integration_anthropic", "integration_clickup"]
+
     // Resend, n8n, Vercel, Notion, Cal.com and Stripe are switched off in this fork (not used).
     static let toggleableIntegrationIds: [String] = [
         "integration_github",
@@ -282,7 +287,7 @@ final class AppState: ObservableObject {
     /// Load integration pills respecting activeIntegrations. VS Code always loads. Safe to call multiple times.
     func loadIntegrationTasks() {
         for task in AgentTask.integrationAgents {
-            let shouldLoad = task.id == "integration_claude" || task.id == "integration_qimah" || activeIntegrations.contains(task.id)
+            let shouldLoad = AgentTask.alwaysOnIds.contains(task.id) || activeIntegrations.contains(task.id)
             let loaded = tasks.contains(where: { $0.id == task.id })
             if shouldLoad && !loaded { tasks.append(task) }
             if !shouldLoad && loaded { tasks.removeAll { $0.id == task.id } }
@@ -293,7 +298,7 @@ final class AppState: ObservableObject {
 
     /// Toggle an integration pill on/off. VS Code cannot be toggled. Max 4 active at once.
     func toggleIntegration(_ id: String) {
-        guard id != "integration_claude", id != "integration_qimah" else { return }
+        guard !AgentTask.alwaysOnIds.contains(id) else { return }
         if activeIntegrations.contains(id) {
             activeIntegrations.remove(id)
             tasks.removeAll { $0.id == id }
