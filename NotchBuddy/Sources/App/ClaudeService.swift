@@ -80,7 +80,35 @@ final class KeychainStore: @unchecked Sendable {
 
     /// Thread-safe read — never touches the Keychain.
     func get(_ key: String) -> String? {
-        lock.withLock { cache[key] }
+        if let v = lock.withLock({ cache[key] }) { return v }
+        // No GitHub token saved: use the GitHub CLI login already on this Mac.
+        if key == "github-token" { return ghCLIToken }
+        return nil
+    }
+
+    /// `gh auth token`, read once in the background and kept in memory only (never written to disk).
+    private var ghToken: String? = nil
+    private var ghTokenLoaded = false
+    var ghCLIToken: String? { lock.withLock { ghToken } }
+
+    func loadGitHubCLIToken() {
+        DispatchQueue.global(qos: .utility).async {
+            let bins = ["/opt/homebrew/bin/gh", "/usr/local/bin/gh", "/usr/bin/gh"]
+            guard let bin = bins.first(where: { FileManager.default.isExecutableFile(atPath: $0) }) else { return }
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: bin)
+            p.arguments = ["auth", "token"]
+            let out = Pipe()
+            p.standardOutput = out
+            p.standardError = Pipe()
+            guard (try? p.run()) != nil else { return }
+            let data = out.fileHandleForReading.readDataToEndOfFile()
+            p.waitUntilExit()
+            guard p.terminationStatus == 0,
+                  let t = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !t.isEmpty else { return }
+            self.lock.withLock { self.ghToken = t; self.ghTokenLoaded = true }
+        }
     }
 
     /// Updates cache + persists to Keychain.

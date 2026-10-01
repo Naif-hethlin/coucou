@@ -73,9 +73,13 @@ final class IslandWindowController: NSWindowController {
     private func setupPanel(screen: NSScreen) {
         // Debug: open the island on a view by name (distributed notification "coucou.debugView", object = view).
         DistributedNotificationCenter.default().addObserver(forName: .init("coucou.debugView"), object: nil, queue: .main) { [weak self] note in
-            guard let name = note.object as? String, let v = IslandView(rawValue: name) else { return }
+            guard let raw = note.object as? String else { return }
+            // "focus:<task id>" opens Home on that pill (e.g. focus:integration_github)
+            let focusId = raw.hasPrefix("focus:") ? String(raw.dropFirst(6)) : nil
+            guard let v = focusId != nil ? IslandView.overview : IslandView(rawValue: raw) else { return }
             Task { @MainActor in
                 guard let self else { return }
+                if let focusId { self.state.setFocus(focusId) }
                 self.expand(to: v)
                 self.fsm.adoptHome()
                 if !self.wasInIsland { self.fsm.mouseLeft() }
