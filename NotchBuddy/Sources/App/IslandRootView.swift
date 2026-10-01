@@ -22,6 +22,8 @@ struct IslandRootView: View {
 
 struct IslandContainer: View {
     @ObservedObject var state: AppState
+    @ObservedObject private var boards = BoardsStore.shared
+    @ObservedObject private var usage = UsageStore.shared
     @State private var islandWidth:  CGFloat = IslandConst.notchWidth
     @State private var islandHeight: CGFloat = IslandConst.notchHeight
     @State private var cornerRadius: CGFloat = IslandConst.roundedCorner
@@ -99,7 +101,7 @@ struct IslandContainer: View {
                 // retain the panel's full height for particles and hands.
                 .mask(alignment: .topLeading) {
                     Rectangle().frame(width: islandWidth,
-                                      height: state.mode == .expanded ? 320 : islandHeight)
+                                      height: state.mode == .expanded ? 440 : islandHeight)
                 }
                 .opacity(uploadActive || greetingActive ? 0 : 1)
                 .animation(.easeInOut(duration: 0.25), value: uploadActive || greetingActive)
@@ -112,6 +114,24 @@ struct IslandContainer: View {
                         .scaleEffect(IslandRestingLayout(width: islandWidth, height: islandHeight).miniGridScale)
                         .position(x: islandWidth - 40, y: islandHeight / 2)
                         .transition(.opacity)
+                    if usage.peak >= 90 {
+                        // Claude plan usage is nearly out
+                        Text("\(Int(usage.peak))%")
+                            .font(.system(size: 8.5, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 4)
+                            .frame(minHeight: 13)
+                            .background(Q.del)
+                            .clipShape(Capsule())
+                            .position(x: boards.owed.isEmpty ? 62 : 88, y: islandHeight / 2 - 6)
+                            .help("Claude usage at \(Int(usage.peak))%")
+                    }
+                    if !boards.owed.isEmpty {
+                        // Owed count from boards.qimah.net, next to Mochi
+                        OwedBadge(count: boards.owed.count)
+                            .position(x: 62, y: islandHeight / 2 - 6)
+                            .transition(.opacity)
+                    }
                 }
             }
             .animation(.easeInOut(duration: 0.25), value: state.mode == .compact)
@@ -423,8 +443,13 @@ struct CountdownBar: View {
 
 struct IslandContentView: View {
     @ObservedObject var state: AppState
+    @ObservedObject private var theme = ThemeStore.shared
 
     var body: some View {
+        content.id(theme.version)   // redraw everything when a theme colour changes
+    }
+
+    private var content: some View {
         VStack(spacing: 0) {
             IslandHeader(state: state)
                 .frame(height: 34)
@@ -437,7 +462,7 @@ struct IslandContentView: View {
                     // Views that fill available height instead of the fixed 98pt content frame:
                     // chat (prompt) is always flexible; mail is flexible only when active so
                     // it doesn't push the ZStack taller when inactive.
-                    let isTall = v == .prompt || (v == .mail && active)
+                    let isTall = v == .prompt || v == .live || v == .progress || v == .sessions || (v == .mail && active)
                     let anim: Animation = active
                         ? .spring(response: 0.4, dampingFraction: 0.8).delay(0.16)
                         : .easeIn(duration: 0.16)
@@ -456,7 +481,7 @@ struct IslandContentView: View {
         }
         .padding(.top, 8)
         .padding(.bottom, 10)
-        .foregroundColor(Color(hex: "#F5F6F8"))
+        .foregroundColor(Q.text)
     }
 }
 
@@ -470,6 +495,9 @@ struct IslandHeader: View {
             // Left: tab capsules
             HStack(spacing: 5) {
                 TabButton(icon: "house.fill", view: .overview, state: state)
+                TabButton(icon: "square.grid.2x2.fill", view: .sessions, state: state)
+                TabButton(icon: "chevron.left.forwardslash.chevron.right", view: .live, state: state)
+                TabButton(icon: "chart.bar.fill", view: .progress, state: state)
                 TabButton(icon: "bubble.left.fill", view: .prompt, state: state, preAction: {
                     #if !APPSTORE
                     if state.promptContext == nil {
@@ -491,15 +519,15 @@ struct IslandHeader: View {
                     }
                 }) {
                     Image(systemName: state.view == .settings ? "gearshape.fill" : "gearshape")
-                        .font(.system(size: 14))
-                        .foregroundColor(state.view == .settings ? Color(hex: "#F5F6F8") : Color(hex: "#8E939C"))
+                        .font(.qimah(size: 14))
+                        .foregroundColor(state.view == .settings ? Q.text : Q.muted)
                 }
                 .buttonStyle(.plain)
 
                 Button(action: { state.soundEnabled.toggle() }) {
                     Image(systemName: state.soundEnabled ? "speaker.wave.2" : "speaker.slash")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color(hex: "#8E939C"))
+                        .font(.qimah(size: 14))
+                        .foregroundColor(Q.muted)
                 }
                 .buttonStyle(.plain)
             }
@@ -529,13 +557,12 @@ struct TabButton: View {
             }
         }) {
             Image(systemName: icon)
-                .font(.system(size: 13))
-                .foregroundColor(isOn ? Color(hex: "#F5F6F8") : (isHovered ? Color(hex: "#B0B5BE") : Color(hex: "#8E939C")))
+                .font(.qimah(size: 13))
+                .foregroundColor(isOn ? Q.text : (isHovered ? Q.soft : Q.muted))
                 .frame(width: 30, height: 22)
-                .background(
-                    isOn ? Color(hex: "#1D1F23") :
-                    isHovered ? Color.white.opacity(0.07) : Color.clear
-                )
+                .background {
+                    if isOn { Q.gradient } else { isHovered ? Color.white.opacity(0.07) : Color.clear }
+                }
                 .clipShape(Capsule())
         }
         .buttonStyle(.plain)

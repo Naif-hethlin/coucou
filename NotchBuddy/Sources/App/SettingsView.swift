@@ -21,6 +21,7 @@ struct SettingsView: View {
     @State private var stripeKey: String    = KeychainStore.shared.get("stripe-api-key")  ?? ""
     @State private var calcomKey: String    = KeychainStore.shared.get("calcom-api-key")  ?? ""
     @State private var notionKey: String    = KeychainStore.shared.get("notion-api-key")  ?? ""
+    @State private var clickupToken: String = KeychainStore.shared.get("clickup-token")   ?? ""
 
     // Hotkey
     @State private var hotkeyFlags: UInt    = AppState.shared.hotkeyFlags
@@ -68,7 +69,7 @@ struct SettingsView: View {
                                 Image(systemName: "exclamationmark.triangle.fill")
                                     .foregroundColor(.orange)
                                 Text("Hook timeout outdated — update to fix approvals")
-                                    .font(.system(size: 11))
+                                    .font(.qimah(size: 11))
                                     .foregroundColor(.orange)
                             }
                             #if APPSTORE
@@ -126,92 +127,28 @@ struct SettingsView: View {
                 GroupBox("Integrations") {
                     VStack(alignment: .leading, spacing: 14) {
 
-                        // Resend
-                        VStack(alignment: .leading, spacing: 5) {
-                            HStack(spacing: 6) {
-                                Circle().fill(Color(hex: "#22C55E")).frame(width: 8, height: 8)
-                                Text("Resend").font(.system(size: 12, weight: .semibold))
-                            }
-                            SecureField("API key  (re_…)", text: $resendKey)
-                                .textFieldStyle(.roundedBorder)
-                            TextField("From address  (you@yourdomain.com)", text: $resendFrom)
-                                .textFieldStyle(.roundedBorder)
-                        }
-
-                        // n8n
-                        VStack(alignment: .leading, spacing: 5) {
-                            HStack(spacing: 6) {
-                                Circle().fill(Color(hex: "#F29B38")).frame(width: 8, height: 8)
-                                Text("n8n").font(.system(size: 12, weight: .semibold))
-                            }
-                            TextField("Instance URL  (https://…)", text: $n8nUrl)
-                                .textFieldStyle(.roundedBorder)
-                            SecureField("API key", text: $n8nKey)
-                                .textFieldStyle(.roundedBorder)
-                            IntegrationFilterRow(
-                                label: "Workflows",
-                                items: n8nWorkflows,
-                                filter: $state.n8nWorkflowFilter,
-                                loading: loadingN8n,
-                                onLoad: loadN8nWorkflows
-                            )
-                        }
-
-                        // Vercel
-                        VStack(alignment: .leading, spacing: 5) {
-                            HStack(spacing: 6) {
-                                Circle().fill(Color(hex: "#7C5CFF")).frame(width: 8, height: 8)
-                                Text("Vercel").font(.system(size: 12, weight: .semibold))
-                            }
-                            SecureField("Token", text: $vercelToken)
-                                .textFieldStyle(.roundedBorder)
-                            IntegrationFilterRow(
-                                label: "Projects",
-                                items: vercelProjects,
-                                filter: $state.vercelProjectFilter,
-                                loading: loadingVercel,
-                                onLoad: loadVercelProjects
-                            )
-                        }
-
-                        // GitHub
+                        // GitHub (optional: without a token Coucou uses your gh CLI login)
                         VStack(alignment: .leading, spacing: 5) {
                             HStack(spacing: 6) {
                                 Circle().fill(Color(hex: "#F4505E")).frame(width: 8, height: 8)
-                                Text("GitHub").font(.system(size: 12, weight: .semibold))
+                                Text("GitHub").font(.qimah(size: 12, weight: .semibold))
+                                Text(KeychainStore.shared.ghCLIToken != nil ? "using your gh login" : "")
+                                    .font(.qimah(size: 11)).foregroundColor(.secondary)
                             }
-                            SecureField("Personal Access Token", text: $githubToken)
+                            SecureField("Personal Access Token (optional)", text: $githubToken)
                                 .textFieldStyle(.roundedBorder)
                         }
 
-                        // Stripe
+                        // ClickUp
                         VStack(alignment: .leading, spacing: 5) {
                             HStack(spacing: 6) {
-                                Circle().fill(Color(hex: "#0570DE")).frame(width: 8, height: 8)
-                                Text("Stripe").font(.system(size: 12, weight: .semibold))
+                                Circle().fill(Color(hex: "#7B68EE")).frame(width: 8, height: 8)
+                                Text("ClickUp").font(.qimah(size: 12, weight: .semibold))
                             }
-                            SecureField("Secret key  (sk_live_… or sk_test_…)", text: $stripeKey)
+                            SecureField("Personal API token  (pk_…)", text: $clickupToken)
                                 .textFieldStyle(.roundedBorder)
-                        }
-
-                        // Cal.com
-                        VStack(alignment: .leading, spacing: 5) {
-                            HStack(spacing: 6) {
-                                Circle().fill(Color(hex: "#C9956A")).frame(width: 8, height: 8)
-                                Text("Cal.com").font(.system(size: 12, weight: .semibold))
-                            }
-                            SecureField("API key  (cal_live_…)", text: $calcomKey)
-                                .textFieldStyle(.roundedBorder)
-                        }
-
-                        // Notion
-                        VStack(alignment: .leading, spacing: 5) {
-                            HStack(spacing: 6) {
-                                Circle().fill(Color(hex: "#E8E8E8")).frame(width: 8, height: 8)
-                                Text("Notion").font(.system(size: 12, weight: .semibold))
-                            }
-                            SecureField("Integration token  (secret_…)", text: $notionKey)
-                                .textFieldStyle(.roundedBorder)
+                            Text("ClickUp › avatar › Settings › Apps › API Token › Generate")
+                                .font(.qimah(size: 10.5)).foregroundColor(.secondary)
                         }
 
                         Button("Save integrations") { saveIntegrations() }
@@ -219,6 +156,8 @@ struct SettingsView: View {
                     }
                     .padding(6)
                 }
+
+                AppearanceSettings()
 
                 // MARK: Son
                 GroupBox("Sound") {
@@ -263,18 +202,18 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
                             Text("VS Code")
-                                .font(.system(size: 12, weight: .semibold))
-                            Circle().fill(Color(hex: "#F5F6F8")).frame(width: 8, height: 8)
+                                .font(.qimah(size: 12, weight: .semibold))
+                            Circle().fill(Q.text).frame(width: 8, height: 8)
                             Spacer()
                             Text("Always active")
-                                .font(.system(size: 11))
+                                .font(.qimah(size: 11))
                                 .foregroundColor(.secondary)
                         }
 
                         Divider()
 
                         Text("\(state.activeIntegrations.count)/4 slots used")
-                            .font(.system(size: 11))
+                            .font(.qimah(size: 11))
                             .foregroundColor(state.activeIntegrations.count >= 4 ? .orange : .secondary)
 
                         ForEach(AgentTask.toggleableIntegrationIds, id: \.self) { id in
@@ -286,7 +225,7 @@ struct SettingsView: View {
                                     .fill(Color(hex: task.color))
                                     .frame(width: 10, height: 10)
                                 Text(task.name)
-                                    .font(.system(size: 12))
+                                    .font(.qimah(size: 12))
                                     .foregroundColor(atMax ? .secondary : .primary)
                                 Spacer()
                                 Toggle("", isOn: Binding(
@@ -313,7 +252,7 @@ struct SettingsView: View {
                                     .onChange(of: hotkeyFlags) { _, v in state.hotkeyFlags = v }
                                     .onChange(of: hotkeyCode)  { _, v in state.hotkeyCode  = v }
                                 Text("presses this → island opens")
-                                    .font(.system(size: 11))
+                                    .font(.qimah(size: 11))
                                     .foregroundColor(.secondary)
                             }
                         }
@@ -330,7 +269,7 @@ struct SettingsView: View {
 
                 if !statusMessage.isEmpty {
                     Text(statusMessage)
-                        .font(.system(size: 12))
+                        .font(.qimah(size: 12))
                         .foregroundColor(statusMessage.hasPrefix("❌") ? .red : .secondary)
                         .padding(.horizontal, 2)
                 }
@@ -440,15 +379,9 @@ struct SettingsView: View {
     }
 
     private func saveIntegrations() {
-        saveKey("resend-api-key",  value: resendKey)
-        saveKey("resend-from",     value: resendFrom)
-        saveKey("n8n-url",         value: n8nUrl)
-        saveKey("n8n-api-key",     value: n8nKey)
-        saveKey("vercel-token",    value: vercelToken)
         saveKey("github-token",    value: githubToken)
-        saveKey("stripe-api-key",  value: stripeKey)
-        saveKey("calcom-api-key",  value: calcomKey)
-        saveKey("notion-api-key",  value: notionKey)
+        saveKey("clickup-token",   value: clickupToken)
+        ClickUpStore.shared.refresh()
         statusMessage = "✓ Integration keys saved."
     }
 
@@ -544,7 +477,7 @@ struct IntegrationFilterRow: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
                 Text(label)
-                    .font(.system(size: 11))
+                    .font(.qimah(size: 11))
                     .foregroundColor(.secondary)
                 Spacer()
                 if loading {
@@ -576,14 +509,14 @@ struct IntegrationFilterRow: View {
                                 }
                             }
                         ))
-                        .font(.system(size: 11))
+                        .font(.qimah(size: 11))
                         .toggleStyle(.checkbox)
                     }
                 }
                 .padding(.leading, 4)
                 if !filter.isEmpty {
                     Text("Watching \(filter.count) of \(items.count)")
-                        .font(.system(size: 10))
+                        .font(.qimah(size: 10))
                         .foregroundColor(.secondary)
                 }
             }
@@ -643,5 +576,98 @@ struct ShortcutRecorderButton: View {
             34:"I", 37:"L", 38:"J", 40:"K", 45:"N", 46:"M", 49:"Space", 50:"`", 27:"-"
         ]
         return map[c] ?? "·"
+    }
+}
+
+// MARK: - Appearance (theme colours, Mochi, font, Live tab)
+
+struct AppearanceSettings: View {
+    @ObservedObject private var theme = ThemeStore.shared
+    @ObservedObject private var state = AppState.shared
+
+    private let rows: [(String, WritableKeyPath<ThemeColors, String>)] = [
+        ("Cards", \.card), ("Pills and chips", \.raised), ("Code background", \.deep),
+        ("Text", \.text), ("Secondary text", \.muted), ("Faint text", \.dim),
+        ("Accent (gradient start)", \.accentA), ("Accent (gradient end)", \.accentB),
+        ("Labels", \.label), ("Added lines", \.add), ("Removed lines", \.del),
+    ]
+
+    var body: some View {
+        GroupBox("Appearance") {
+            VStack(alignment: .leading, spacing: 12) {
+                // Presets
+                HStack(spacing: 8) {
+                    ForEach(ThemePresets.all) { p in
+                        Button(action: { theme.apply(p) }) {
+                            HStack(spacing: 6) {
+                                HStack(spacing: 0) {
+                                    Color(hex: p.colors.card)
+                                    Color(hex: p.colors.accentB)
+                                    Color(hex: p.colors.mochiBottom)
+                                }
+                                .frame(width: 30, height: 14)
+                                .clipShape(Capsule())
+                                Text(p.name).font(.system(size: 12, weight: theme.colors == p.colors ? .semibold : .regular))
+                            }
+                            .padding(.horizontal, 10).padding(.vertical, 5)
+                            .background(theme.colors == p.colors ? Color.accentColor.opacity(0.18) : Color.secondary.opacity(0.08))
+                            .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
+                Divider()
+
+                Text("Mochi").font(.system(size: 12, weight: .semibold))
+                HStack(spacing: 16) {
+                    ColorPicker("Head", selection: theme.binding(\.mochiTop), supportsOpacity: false)
+                    ColorPicker("Body", selection: theme.binding(\.mochiBottom), supportsOpacity: false)
+                    Spacer()
+                    MochiSwatch(top: theme.colors.mochiTop, bottom: theme.colors.mochiBottom)
+                }
+
+                Divider()
+
+                Text("Colours").font(.system(size: 12, weight: .semibold))
+                LazyVGrid(columns: [GridItem(.flexible(), alignment: .leading), GridItem(.flexible(), alignment: .leading)],
+                          alignment: .leading, spacing: 8) {
+                    ForEach(rows, id: \.0) { row in
+                        ColorPicker(row.0, selection: theme.binding(row.1), supportsOpacity: false)
+                    }
+                }
+
+                Divider()
+
+                Toggle("Use the Qimah font (IBM Plex Sans Arabic)", isOn: $theme.colors.useQimahFont)
+                Toggle("Open the Live tab when Claude edits a file", isOn: $state.autoOpenLive)
+                Toggle("Open the Progress tab when Claude posts a status update", isOn: $state.autoOpenProgress)
+                HStack(spacing: 8) {
+                    Text("Live typing speed")
+                    Slider(value: $state.liveSpeed, in: 0.25...4)
+                    Text(String(format: "%.2gx", state.liveSpeed))
+                        .monospacedDigit()
+                        .frame(width: 40, alignment: .trailing)
+                }
+            }
+            .padding(6)
+        }
+    }
+}
+
+private struct MochiSwatch: View {
+    let top: String
+    let bottom: String
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 11)
+                .fill(LinearGradient(colors: [Color(hex: top), Color(hex: bottom)], startPoint: .top, endPoint: .bottom))
+                .frame(width: 36, height: 27)
+            HStack(spacing: 9) {
+                Capsule().fill(Color(hex: "#1A1412")).frame(width: 4, height: 6)
+                Capsule().fill(Color(hex: "#1A1412")).frame(width: 4, height: 6)
+            }
+        }
     }
 }

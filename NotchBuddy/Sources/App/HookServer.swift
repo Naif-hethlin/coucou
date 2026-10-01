@@ -168,10 +168,13 @@ final class HookServer: @unchecked Sendable {
         let bundleId    = payload["bundle_id"]    as? String ?? ""
         let isVSCode = termProgram.lowercased().contains("vscode") ||
                        bundleId.lowercased().contains("vscode")
-        guard isVSCode else {
-            nbLog("Ignored \(name) from \(termProgram.isEmpty ? bundleId : termProgram) (\(projectName))")
-            return
-        }
+        // Every session, from any app, is tracked on its own; only the followed
+        // session drives Live, Progress and the boards bar, so sessions don't mix.
+        SessionStore.shared.handle(event: name, payload: payload)
+        routeToFollowed(name: name, payload: payload, sessionId: sessionId, cwd: cwd)
+
+        // The original VS Code pill below still only listens to VS Code.
+        guard isVSCode else { return }
 
         let focused = state.focusId == "integration_claude"
 
@@ -227,7 +230,7 @@ final class HookServer: @unchecked Sendable {
                 appendStep(id: "integration_claude", step: String(message.prefix(60)))
             }
             SoundEngine.shared.play("finish")
-            if focused {
+            if focused && !(state.mode == .expanded && state.view == .live) {
                 expandIfNeeded(to: .finished)
             } else {
                 setPillBadge(id: "integration_claude", badge: .finished)
@@ -257,6 +260,50 @@ final class HookServer: @unchecked Sendable {
         case "SubagentStop":
             appendStep(id: "integration_claude", step: "• subagent done")
 
+        default:
+            break
+        }
+    }
+
+    // MARK: - Live / Progress / boards routing (any session, followed one only)
+
+    @MainActor
+    private func routeToFollowed(name: String, payload: [String: Any], sessionId: String, cwd: String) {
+        let state = AppState.shared
+        guard SessionStore.shared.shouldFollow(sessionId) else { return }
+        let transcript = payload["transcript_path"] as? String
+        let tool = payload["tool_name"] as? String ?? ""
+        let input = payload["tool_input"] as? [String: Any] ?? [:]
+
+        switch name {
+        case "UserPromptSubmit":
+            LiveFeed.shared.userPrompt(transcriptPath: transcript)
+            ProgressStore.shared.note(transcriptPath: transcript)
+            BoardsStore.shared.noteBranch(cwd: cwd)
+            BoardsStore.shared.noteContext(payload["prompt"] as? String ?? "")
+            if state.autoOpenLive, state.isPresent, state.mode != .expanded {
+                NotificationCenter.default.post(name: .hookExpand, object: IslandView.live)
+            }
+        case "PreToolUse":
+            LiveFeed.shared.preToolUse(tool: tool, input: input, transcriptPath: transcript)
+            BoardsStore.shared.noteBranch(cwd: cwd)
+            BoardsStore.shared.noteContext(input["command"] as? String ?? "")
+            ProgressStore.shared.preToolUse(tool: tool, input: input)
+            ProgressStore.shared.note(transcriptPath: transcript)
+            if state.autoOpenLive, ["Edit", "MultiEdit", "Write"].contains(tool),
+               state.isPresent, state.mode != .expanded || state.view == .greeting {
+                NotificationCenter.default.post(name: .hookExpand, object: IslandView.live)
+            }
+        case "PostToolUse":
+            LiveFeed.shared.postToolUse(tool: tool, response: payload["tool_response"])
+            ProgressStore.shared.postToolUse(response: payload["tool_response"])
+        case "PostToolUseFailure":
+            LiveFeed.shared.toolFailed()
+        case "Stop":
+            LiveFeed.shared.stopped()
+            ProgressStore.shared.note(transcriptPath: transcript)
+        case "SessionEnd":
+            LiveFeed.shared.stopped()
         default:
             break
         }

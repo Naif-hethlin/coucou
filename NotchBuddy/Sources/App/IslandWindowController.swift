@@ -51,7 +51,7 @@ final class IslandWindowController: NSWindowController {
         let nH = geometry.height
 
         let panelW: CGFloat = 720
-        let panelH: CGFloat = 320
+        let panelH: CGFloat = 440   // tall enough for the Live tab
         let sf = screen.frame
         let panel = IslandPanel(
             contentRect: NSRect(x: sf.midX - panelW/2, y: sf.maxY - panelH,
@@ -71,6 +71,35 @@ final class IslandWindowController: NSWindowController {
     }
 
     private func setupPanel(screen: NSScreen) {
+        // Debug: open the island on a view by name (distributed notification "coucou.debugView", object = view).
+        DistributedNotificationCenter.default().addObserver(forName: .init("coucou.debugView"), object: nil, queue: .main) { [weak self] note in
+            guard let raw = note.object as? String else { return }
+            // "focus:<task id>" opens Home on that pill (e.g. focus:integration_github)
+            let focusId = raw.hasPrefix("focus:") ? String(raw.dropFirst(6)) : nil
+            guard let v = focusId != nil ? IslandView.overview : IslandView(rawValue: raw) else { return }
+            Task { @MainActor in
+                guard let self else { return }
+                if let focusId { self.state.setFocus(focusId) }
+                self.expand(to: v)
+                self.fsm.adoptHome()
+                if !self.wasInIsland { self.fsm.mouseLeft() }
+            }
+        }
+        // Debug: fake a boards.qimah.net news event (distributed notification "coucou.debugNews").
+        DistributedNotificationCenter.default().addObserver(forName: .init("coucou.debugNews"), object: nil, queue: .main) { _ in
+            NotificationCenter.default.post(name: .boardsNews, object: "debug")
+        }
+        // Debug: `notifyutil`-style snapshot of the island without Screen Recording permission.
+        // Post the distributed notification "coucou.snapshot" with a file path as object.
+        DistributedNotificationCenter.default().addObserver(forName: .init("coucou.snapshot"), object: nil, queue: .main) { [weak self] note in
+            let path = (note.object as? String) ?? "/tmp/coucou-snapshot.png"
+            Task { @MainActor in
+                guard let view = self?.window?.contentView,
+                      let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
+                view.cacheDisplay(in: view.bounds, to: rep)
+                try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
+            }
+        }
         guard let panel = window as? IslandPanel else { return }
         panel.backgroundColor = .clear
         panel.isOpaque = false
@@ -153,6 +182,10 @@ final class IslandWindowController: NSWindowController {
     // MARK: - FSM wiring
 
     private func wireFSM() {
+        fsm.holdOpen = { [weak self] in
+            guard let self else { return false }
+            return self.state.view == .live && LiveFeed.shared.isActive
+        }
         fsm.onTransition = { [weak self] from, to in
             guard let self else { return }
             switch to {
@@ -321,6 +354,7 @@ final class IslandWindowController: NSWindowController {
     func setMode(_ mode: IslandMode) {
         let prev = state.mode
         guard mode != prev else { return }
+        appendAppLog("nb.log", "Island: \(prev) -> \(mode) [view \(state.view)]")
         let shrinking = modeLevel(mode) < modeLevel(prev)
         let anim: Animation = shrinking
             ? .timingCurve(0.45, 0, 0.2, 1, duration: 0.34)
@@ -366,7 +400,39 @@ final class IslandWindowController: NSWindowController {
         // Hook server expand requests (alerts only)
         NotificationCenter.default.addObserver(forName: .hookExpand, object: nil, queue: .main) { [weak self] note in
             guard let self, let view = note.object as? IslandView else { return }
+            if view == .live {
+                appendAppLog("nb.log", "Live: expanding")
+                // Live opens like a normal home view so it collapses on its own once Claude goes quiet.
+                self.expand(to: .live)
+                self.fsm.adoptHome()
+                if !self.wasInIsland { self.fsm.mouseLeft() }
+                return
+            }
             self.expand(to: view)
+        }
+
+        // New status update from Claude: pop the Progress tab (never interrupts Live).
+        NotificationCenter.default.addObserver(forName: .progressUpdated, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.state.autoOpenProgress, self.state.isPresent else { return }
+                if self.state.mode == .expanded, self.state.view == .live || self.state.view == .progress { return }
+                SoundEngine.shared.play("blip")
+                self.expand(to: .progress)
+                self.fsm.adoptHome()
+                if !self.wasInIsland { self.fsm.mouseLeft() }
+            }
+        }
+
+        // boards.qimah.net news (card shipped, something new owed): pop Home on the Qimah card
+        NotificationCenter.default.addObserver(forName: .boardsNews, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, self.state.mode != .expanded else { return }
+                self.state.setFocus("integration_qimah")
+                SoundEngine.shared.play("blip")
+                self.expand(to: .overview)
+                self.fsm.adoptHome()
+                if !self.wasInIsland { self.fsm.mouseLeft() }
+            }
         }
 
         // Hook server compact reveal (non-alert work events: session start, tool use, etc.)

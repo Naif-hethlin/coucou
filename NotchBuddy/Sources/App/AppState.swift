@@ -7,19 +7,19 @@ extension AgentTask {
     /// All available integration pills. Claude is always active; others are opt-in (max 4).
     static let integrationAgents: [AgentTask] = [
         AgentTask(id: "integration_claude",  name: "VS Code",   color: "#F5F6F8", state: .idle, steps: [], source: .claudeCode, isIntegration: true),
-        AgentTask(id: "integration_resend",  name: "Resend",    color: "#22C55E", state: .idle, steps: [], source: .n8n, isIntegration: true),
-        AgentTask(id: "integration_n8n",     name: "n8n",       color: "#F29B38", state: .idle, steps: [], source: .n8n, isIntegration: true),
-        AgentTask(id: "integration_vercel",  name: "Vercel",    color: "#7C5CFF", state: .idle, steps: [], source: .n8n, isIntegration: true),
+        AgentTask(id: "integration_qimah",   name: "Qimah",     color: "#2A8A62", state: .idle, steps: [], source: .n8n, isIntegration: true),
+        AgentTask(id: "integration_anthropic", name: "Claude",  color: "#D97757", state: .idle, steps: [], source: .n8n, isIntegration: true),
+        AgentTask(id: "integration_clickup", name: "ClickUp",   color: "#7B68EE", state: .idle, steps: [], source: .n8n, isIntegration: true),
         AgentTask(id: "integration_github",  name: "GitHub",    color: "#F4505E", state: .idle, steps: [], source: .n8n, isIntegration: true),
-        AgentTask(id: "integration_notion",  name: "Notion",    color: "#8C8C8C", state: .idle, steps: [], source: .n8n, isIntegration: true),
-        AgentTask(id: "integration_calcom",  name: "Cal.com",   color: "#C9956A", state: .idle, steps: [], source: .n8n, isIntegration: true),
-        AgentTask(id: "integration_stripe",  name: "Stripe",    color: "#0570DE", state: .idle, steps: [], source: .n8n, isIntegration: true),
     ]
 
     /// IDs that can be toggled (VS Code is always on and excluded from this list)
+    /// Pills that are always shown and don't use one of the 4 toggle slots.
+    static let alwaysOnIds: Set<String> = ["integration_claude", "integration_qimah", "integration_anthropic", "integration_clickup"]
+
+    // Resend, n8n, Vercel, Notion, Cal.com and Stripe are switched off in this fork (not used).
     static let toggleableIntegrationIds: [String] = [
-        "integration_resend", "integration_n8n", "integration_vercel", "integration_github",
-        "integration_notion", "integration_calcom", "integration_stripe",
+        "integration_github",
     ]
 
 }
@@ -136,12 +136,27 @@ final class AppState: ObservableObject {
     }
 
     // Active integration pills (VS Code excluded — always on). Max 4.
-    @Published var activeIntegrations: Set<String> = ["integration_resend", "integration_n8n", "integration_vercel", "integration_github"] {
+    @Published var activeIntegrations: Set<String> = ["integration_github"] {
         didSet {
             if let data = try? JSONEncoder().encode(Array(activeIntegrations)) {
                 UserDefaults.standard.set(data, forKey: "activeIntegrations")
             }
         }
+    }
+
+    // Open the Live tab automatically when Claude edits a file — persisted
+    @Published var autoOpenLive: Bool = true {
+        didSet { UserDefaults.standard.set(autoOpenLive, forKey: "autoOpenLive") }
+    }
+
+    // Pop the notch on the Progress tab when Claude posts a status update — persisted
+    @Published var autoOpenProgress: Bool = true {
+        didSet { UserDefaults.standard.set(autoOpenProgress, forKey: "autoOpenProgress") }
+    }
+
+    // Live tab typing speed multiplier (0.25x – 4x) — persisted
+    @Published var liveSpeed: Double = 1 {
+        didSet { UserDefaults.standard.set(liveSpeed, forKey: "liveSpeed") }
     }
 
     // Pending API result
@@ -195,6 +210,9 @@ final class AppState: ObservableObject {
         if let v = ud.object(forKey: "absenceInterval")   as? Double { absenceInterval   = v }
         if let v = ud.object(forKey: "greetThreshold")    as? Double { greetThresholdSeconds = v }
         if let v = ud.object(forKey: "hotkeyEnabled") as? Bool  { hotkeyEnabled = v }
+        if let v = ud.object(forKey: "autoOpenLive") as? Bool { autoOpenLive = v }
+        if let v = ud.object(forKey: "liveSpeed") as? Double { liveSpeed = v }
+        if let v = ud.object(forKey: "autoOpenProgress") as? Bool { autoOpenProgress = v }
         if let v = ud.object(forKey: "hotkeyFlags")   as? Int   { hotkeyFlags = UInt(v) }
         if let v = ud.object(forKey: "hotkeyCode")    as? Int   { hotkeyCode = UInt16(v) }
         if let d = ud.data(forKey: "vercelProjectFilter"),
@@ -202,7 +220,9 @@ final class AppState: ObservableObject {
         if let d = ud.data(forKey: "n8nWorkflowFilter"),
            let a = try? JSONDecoder().decode([String].self, from: d) { n8nWorkflowFilter = Set(a) }
         if let d = ud.data(forKey: "activeIntegrations"),
-           let a = try? JSONDecoder().decode([String].self, from: d) { activeIntegrations = Set(a) }
+           let a = try? JSONDecoder().decode([String].self, from: d) {
+            activeIntegrations = Set(a).intersection(AgentTask.toggleableIntegrationIds)   // drop removed ones
+        }
 
         // Sync SoundEngine volume on launch
         SoundEngine.shared.volume = Float(soundVolume)
@@ -267,7 +287,7 @@ final class AppState: ObservableObject {
     /// Load integration pills respecting activeIntegrations. VS Code always loads. Safe to call multiple times.
     func loadIntegrationTasks() {
         for task in AgentTask.integrationAgents {
-            let shouldLoad = task.id == "integration_claude" || activeIntegrations.contains(task.id)
+            let shouldLoad = AgentTask.alwaysOnIds.contains(task.id) || activeIntegrations.contains(task.id)
             let loaded = tasks.contains(where: { $0.id == task.id })
             if shouldLoad && !loaded { tasks.append(task) }
             if !shouldLoad && loaded { tasks.removeAll { $0.id == task.id } }
@@ -278,7 +298,7 @@ final class AppState: ObservableObject {
 
     /// Toggle an integration pill on/off. VS Code cannot be toggled. Max 4 active at once.
     func toggleIntegration(_ id: String) {
-        guard id != "integration_claude" else { return }
+        guard !AgentTask.alwaysOnIds.contains(id) else { return }
         if activeIntegrations.contains(id) {
             activeIntegrations.remove(id)
             tasks.removeAll { $0.id == id }
