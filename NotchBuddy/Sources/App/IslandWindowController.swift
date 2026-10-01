@@ -71,6 +71,16 @@ final class IslandWindowController: NSWindowController {
     }
 
     private func setupPanel(screen: NSScreen) {
+        // Debug: open the island on a view by name (distributed notification "coucou.debugView", object = view).
+        DistributedNotificationCenter.default().addObserver(forName: .init("coucou.debugView"), object: nil, queue: .main) { [weak self] note in
+            guard let name = note.object as? String, let v = IslandView(rawValue: name) else { return }
+            Task { @MainActor in
+                guard let self else { return }
+                self.expand(to: v)
+                self.fsm.adoptHome()
+                if !self.wasInIsland { self.fsm.mouseLeft() }
+            }
+        }
         // Debug: fake a boards.qimah.net news event (distributed notification "coucou.debugNews").
         DistributedNotificationCenter.default().addObserver(forName: .init("coucou.debugNews"), object: nil, queue: .main) { _ in
             NotificationCenter.default.post(name: .boardsNews, object: "debug")

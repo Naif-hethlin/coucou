@@ -73,6 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         CalcomPoller.shared.start()
         NotionPoller.shared.start()
         BoardsStore.shared.start()
+        ProgressStore.shared.start()
         NotificationCenter.default.addObserver(self, selector: #selector(openSettings),
                                                name: .openFullSettings, object: nil)
     }

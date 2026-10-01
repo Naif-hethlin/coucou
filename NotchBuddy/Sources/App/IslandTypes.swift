@@ -12,7 +12,7 @@ enum IslandView: String, CaseIterable {
     case overview, empty, approval, question, error, finished
     case confused, upload, uploading, choose, mail, prompt
     case searching, result, note, settings, greeting
-    case live
+    case live, progress
 }
 
 // MARK: - Bot State
@@ -110,6 +110,7 @@ enum IslandConst {
         .greeting:  ViewLayout(height: 150, botX: 320, botY: 90,  botDiameter: 0,  agentMode: .none),
         // Live: tall card, small Mochi top-left next to "what Claude is doing"
         .live:      ViewLayout(height: 410, botX: 44,  botY: 76,  botDiameter: 34, agentMode: .none),
+        .progress:  ViewLayout(height: 410, botX: 44,  botY: 76,  botDiameter: 34, agentMode: .none),
     ]
 
     // Project colors — keyed by lowercase display name or slug

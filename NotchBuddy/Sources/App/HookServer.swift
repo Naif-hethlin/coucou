@@ -192,6 +192,7 @@ final class HookServer: @unchecked Sendable {
                 appendStep(id: "integration_claude", step: String(prompt.prefix(60)))
             }
             LiveFeed.shared.userPrompt(transcriptPath: payload["transcript_path"] as? String)
+            ProgressStore.shared.note(transcriptPath: payload["transcript_path"] as? String)
             BoardsStore.shared.noteBranch(cwd: cwd)
             BoardsStore.shared.noteContext(payload["prompt"] as? String ?? "")
             if state.autoOpenLive, state.isPresent, state.mode != .expanded {
@@ -212,6 +213,8 @@ final class HookServer: @unchecked Sendable {
                                        transcriptPath: payload["transcript_path"] as? String)
             BoardsStore.shared.noteBranch(cwd: cwd)
             BoardsStore.shared.noteContext(input["command"] as? String ?? "")
+            ProgressStore.shared.preToolUse(tool: tool, input: input)
+            ProgressStore.shared.note(transcriptPath: payload["transcript_path"] as? String)
             if state.autoOpenLive, ["Edit", "MultiEdit", "Write"].contains(tool),
                state.isPresent, state.mode != .expanded || state.view == .greeting {
                 nbLog("Live: auto-open (mode \(state.mode))")
@@ -222,6 +225,7 @@ final class HookServer: @unchecked Sendable {
             state.updateTask(id: "integration_claude", state: .working)
             LiveFeed.shared.postToolUse(tool: payload["tool_name"] as? String ?? "",
                                         response: payload["tool_response"])
+            ProgressStore.shared.postToolUse(response: payload["tool_response"])
 
         case "PostToolUseFailure":
             state.updateTask(id: "integration_claude", state: .working)
@@ -242,6 +246,7 @@ final class HookServer: @unchecked Sendable {
         case "Stop":
             state.updateTask(id: "integration_claude", state: .finished)
             LiveFeed.shared.stopped()
+            ProgressStore.shared.note(transcriptPath: payload["transcript_path"] as? String)
             if let message = payload["message"] as? String, !message.isEmpty {
                 appendStep(id: "integration_claude", step: String(message.prefix(60)))
             }
